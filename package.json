@@ -1,6 +1,6 @@
 {
   "name": "@reactkits.dev/react-feedbox",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Headless & Reskinnable Feedback, Bug Report, Suggestion Box & FAQ React Widget",
   "license": "MIT",
