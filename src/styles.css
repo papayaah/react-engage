@@ -157,7 +157,7 @@
   color: var(--rfw-fg);
 }
 
-/* Navigation Tabs */
+/* Main Top Navigation Tabs */
 .rfw-nav {
   display: flex;
   background-color: var(--rfw-card-bg);
@@ -191,6 +191,45 @@
   color: var(--rfw-accent);
   border-bottom-color: var(--rfw-accent);
   font-weight: 600;
+}
+
+/* Mini Category Pills inside Feedback Form */
+.rfw-mini-nav {
+  display: flex;
+  gap: 4px;
+  background-color: var(--rfw-card-bg);
+  border: 1px solid var(--rfw-card-border);
+  padding: 4px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+}
+
+.rfw-mini-btn {
+  flex: 1;
+  padding: 6px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--rfw-muted);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.rfw-mini-btn:hover {
+  color: var(--rfw-fg);
+}
+
+.rfw-mini-btn[data-active="true"] {
+  background-color: var(--rfw-bg);
+  color: var(--rfw-fg);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
 /* Content Area */

@@ -1,9 +1,7 @@
 export { FeedbackWidget } from './components/FeedbackWidget';
 export { FeedbackDrawer } from './components/FeedbackDrawer';
 export { FaqTab } from './components/tabs/FaqTab';
-export { BugReportTab } from './components/tabs/BugReportTab';
-export { SuggestionTab } from './components/tabs/SuggestionTab';
-export { TicketTab } from './components/tabs/TicketTab';
+export { FeedbackFormTab } from './components/tabs/FeedbackFormTab';
 
 export { useEnvironmentMeta } from './hooks/useEnvironmentMeta';
 export { useFeedbackTheme } from './hooks/useFeedbackTheme';
