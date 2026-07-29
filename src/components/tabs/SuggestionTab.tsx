@@ -111,11 +111,11 @@ export const SuggestionTab: React.FC<SuggestionTabProps> = ({ appId, user, onSub
           value={category}
           onChange={(e) => setCategory(e.target.value as SuggestionCategory)}
         >
-          <option value="new_feature">✨ New Feature</option>
-          <option value="ui_ux">🎨 UI / UX Enhancement</option>
-          <option value="performance">⚡ Performance Improvement</option>
-          <option value="integrations">🔗 Integration / API</option>
-          <option value="other">💡 Other Idea</option>
+          <option value="new_feature">New Feature</option>
+          <option value="ui_ux">UI / UX Enhancement</option>
+          <option value="performance">Performance Improvement</option>
+          <option value="integrations">Integration / API</option>
+          <option value="other">Other Idea</option>
         </select>
       </div>
 

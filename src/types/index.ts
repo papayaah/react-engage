@@ -1,9 +1,10 @@
 export type WidgetTheme = 'inherit' | 'system' | 'light' | 'dark';
 export type WidgetPosition = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
-export type TabId = 'faq' | 'bug' | 'suggestion' | 'ticket';
+export type TabId = 'faq' | 'feedback' | 'bug' | 'suggestion' | 'ticket';
 
 export type BugSeverity = 'low' | 'medium' | 'high' | 'critical';
 export type SuggestionCategory = 'ui_ux' | 'new_feature' | 'performance' | 'integrations' | 'other';
+export type FeedbackCategory = 'general' | 'bug' | 'feature' | 'support';
 
 export interface WidgetUser {
   id?: string;
@@ -30,6 +31,16 @@ export interface EnvironmentMeta {
   devicePixelRatio: number;
   timestamp: string;
   themeMode: 'light' | 'dark';
+}
+
+export interface FeedbackPayload {
+  appId: string;
+  category: FeedbackCategory;
+  message: string;
+  email?: string;
+  user?: WidgetUser;
+  attachments?: Attachment[];
+  timestamp: string;
 }
 
 export interface BugReportPayload {
@@ -72,6 +83,7 @@ export interface FaqItem {
 export interface CustomLabels {
   launcherTitle?: string;
   faqTabTitle?: string;
+  feedbackTabTitle?: string;
   bugTabTitle?: string;
   suggestionTabTitle?: string;
   ticketTabTitle?: string;
@@ -90,7 +102,7 @@ export interface FeedbackWidgetProps {
   user?: WidgetUser;
   /** FAQs/help items list */
   faqs?: FaqItem[];
-  /** Enabled tabs. Defaults to all tabs if omitted */
+  /** Enabled tabs. Defaults to ['faq', 'feedback'] */
   enabledTabs?: TabId[];
   /** Initial active tab when drawer opens */
   defaultTab?: TabId;
@@ -100,6 +112,8 @@ export interface FeedbackWidgetProps {
   accentColor?: string;
   /** Webhook URL or endpoint for automatic REST submission */
   endpointUrl?: string;
+  /** Callback triggered when feedback is submitted */
+  onSubmitFeedback?: (payload: FeedbackPayload) => Promise<void> | void;
   /** Callback triggered when a bug report is submitted */
   onSubmitBug?: (payload: BugReportPayload) => Promise<void> | void;
   /** Callback triggered when a suggestion is submitted */

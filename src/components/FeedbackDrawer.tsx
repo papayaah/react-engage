@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { TabId, FeedbackWidgetProps } from '../types';
 import { FaqTab } from './tabs/FaqTab';
+import { FeedbackTab, FeedbackPayload } from './tabs/FeedbackTab';
 import { BugReportTab } from './tabs/BugReportTab';
 import { SuggestionTab } from './tabs/SuggestionTab';
 import { TicketTab } from './tabs/TicketTab';
-import { X, HelpCircle, Bug, Lightbulb, LifeBuoy } from 'lucide-react';
+import { X, HelpCircle, MessageSquare, Bug, Lightbulb, LifeBuoy } from 'lucide-react';
 
 interface FeedbackDrawerProps extends FeedbackWidgetProps {
   onClose: () => void;
@@ -15,11 +16,12 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
   appId = 'app',
   user,
   faqs,
-  enabledTabs = ['faq', 'bug', 'suggestion', 'ticket'],
+  enabledTabs = ['faq', 'feedback'],
   defaultTab,
   labels,
   themeMode,
   endpointUrl,
+  onSubmitFeedback,
   onSubmitBug,
   onSubmitSuggestion,
   onSubmitTicket,
@@ -28,7 +30,17 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
   const initialTab = defaultTab && enabledTabs.includes(defaultTab) ? defaultTab : enabledTabs[0] || 'faq';
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
 
-  // Fallback submit handler if endpointUrl is set
+  const handleFeedbackSubmit = async (payload: FeedbackPayload) => {
+    if (onSubmitFeedback) {
+      await onSubmitFeedback(payload);
+    } else if (endpointUrl) {
+      const { sendPayloadToEndpoint } = await import('../utils/adapters');
+      await sendPayloadToEndpoint(endpointUrl, 'feedback', payload);
+    } else {
+      console.log('[FeedbackWidget] Feedback payload:', payload);
+    }
+  };
+
   const handleBugSubmit = async (payload: any) => {
     if (onSubmitBug) {
       await onSubmitBug(payload);
@@ -86,6 +98,17 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
             </button>
           )}
 
+          {enabledTabs.includes('feedback') && (
+            <button
+              className="rfw-nav-btn"
+              data-active={activeTab === 'feedback'}
+              onClick={() => setActiveTab('feedback')}
+            >
+              <MessageSquare size={14} />
+              <span>{labels?.feedbackTabTitle || 'Feedback'}</span>
+            </button>
+          )}
+
           {enabledTabs.includes('bug') && (
             <button
               className="rfw-nav-btn"
@@ -124,6 +147,13 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
       {/* Body panel content */}
       <div className="rfw-body">
         {activeTab === 'faq' && <FaqTab faqs={faqs} />}
+        {activeTab === 'feedback' && (
+          <FeedbackTab
+            appId={appId}
+            user={user}
+            onSubmit={handleFeedbackSubmit}
+          />
+        )}
         {activeTab === 'bug' && (
           <BugReportTab
             appId={appId}
