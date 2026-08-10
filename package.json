@@ -41,6 +41,11 @@
       "import": "./src/admin/index.ts",
       "require": "./src/admin/index.ts"
     },
+    "./server": {
+      "types": "./src/server/index.ts",
+      "import": "./src/server/index.ts",
+      "require": "./src/server/index.ts"
+    },
     "./styles.css": "./src/styles.css"
   },
   "files": [
