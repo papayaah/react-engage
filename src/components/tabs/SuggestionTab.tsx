@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { SuggestionPayload, SuggestionCategory, WidgetUser } from '../../types';
-import { CheckCircle2, AlertCircle, Lightbulb } from 'lucide-react';
+import { AlertCircle, Lightbulb } from 'lucide-react';
 
 interface SuggestionTabProps {
   appId: string;

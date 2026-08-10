@@ -1,9 +1,9 @@
-import { BugReportPayload, SuggestionPayload, TicketPayload } from '../types';
+import { BugReportPayload, SuggestionPayload, TicketPayload, NewsletterPayload } from '../types';
 
 export async function sendPayloadToEndpoint(
   endpointUrl: string,
-  type: 'bug' | 'suggestion' | 'ticket',
-  payload: BugReportPayload | SuggestionPayload | TicketPayload
+  type: 'bug' | 'suggestion' | 'ticket' | 'newsletter',
+  payload: BugReportPayload | SuggestionPayload | TicketPayload | NewsletterPayload
 ): Promise<void> {
   const response = await fetch(endpointUrl, {
     method: 'POST',
@@ -20,3 +20,4 @@ export async function sendPayloadToEndpoint(
     throw new Error(`Failed to send ${type} report to endpoint: ${response.statusText}`);
   }
 }
+

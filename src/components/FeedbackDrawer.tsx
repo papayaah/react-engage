@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { FeedbackWidgetProps } from '../types';
 import { FaqTab } from './tabs/FaqTab';
 import { FeedbackFormTab, FeedbackCategory } from './tabs/FeedbackFormTab';
-import { X, HelpCircle, MessageSquare } from 'lucide-react';
+import { NewsletterTab } from './tabs/NewsletterTab';
+import { X, HelpCircle, MessageSquare, Mail } from 'lucide-react';
 
 interface FeedbackDrawerProps extends FeedbackWidgetProps {
   onClose: () => void;
@@ -19,10 +20,11 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
   onSubmitBug,
   onSubmitSuggestion,
   onSubmitTicket,
+  onSubmitNewsletter,
   onClose,
 }) => {
-  const [activeTab, setActiveTab] = useState<'faq' | 'feedback'>('faq');
-  const [initialFeedbackCategory, setInitialFeedbackCategory] = useState<FeedbackCategory>('bug');
+  const [activeTab, setActiveTab] = useState<'faq' | 'feedback' | 'newsletter'>('faq');
+  const initialFeedbackCategory: FeedbackCategory = 'bug';
 
   // Fallback submit handlers
   const handleBugSubmit = async (payload: any) => {
@@ -32,7 +34,7 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
       const { sendPayloadToEndpoint } = await import('../utils/adapters');
       await sendPayloadToEndpoint(endpointUrl, 'bug', payload);
     } else {
-      console.log('[Feedbox] Bug report payload:', payload);
+      console.log('[Engage] Bug report payload:', payload);
     }
   };
 
@@ -43,7 +45,7 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
       const { sendPayloadToEndpoint } = await import('../utils/adapters');
       await sendPayloadToEndpoint(endpointUrl, 'suggestion', payload);
     } else {
-      console.log('[Feedbox] Suggestion payload:', payload);
+      console.log('[Engage] Suggestion payload:', payload);
     }
   };
 
@@ -54,7 +56,18 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
       const { sendPayloadToEndpoint } = await import('../utils/adapters');
       await sendPayloadToEndpoint(endpointUrl, 'ticket', payload);
     } else {
-      console.log('[Feedbox] Ticket payload:', payload);
+      console.log('[Engage] Ticket payload:', payload);
+    }
+  };
+
+  const handleNewsletterSubmit = async (payload: any) => {
+    if (onSubmitNewsletter) {
+      await onSubmitNewsletter(payload);
+    } else if (endpointUrl) {
+      const { sendPayloadToEndpoint } = await import('../utils/adapters');
+      await sendPayloadToEndpoint(endpointUrl, 'newsletter', payload);
+    } else {
+      console.log('[Engage] Newsletter payload:', payload);
     }
   };
 
@@ -68,7 +81,7 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
         </button>
       </div>
 
-      {/* Streamlined 2-Tab Navigation Bar */}
+      {/* 3-Tab Navigation Bar */}
       <div className="rfw-nav">
         <button
           className="rfw-nav-btn"
@@ -76,7 +89,7 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
           onClick={() => setActiveTab('faq')}
         >
           <HelpCircle size={15} />
-          <span>{labels?.faqTabTitle || 'FAQ & Help'}</span>
+          <span>{labels?.faqTabTitle || 'FAQ'}</span>
         </button>
 
         <button
@@ -85,7 +98,16 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
           onClick={() => setActiveTab('feedback')}
         >
           <MessageSquare size={15} />
-          <span>{labels?.bugTabTitle || 'Feedback & Support'}</span>
+          <span>{labels?.bugTabTitle || 'Support'}</span>
+        </button>
+
+        <button
+          className="rfw-nav-btn"
+          data-active={activeTab === 'newsletter'}
+          onClick={() => setActiveTab('newsletter')}
+        >
+          <Mail size={15} />
+          <span>{labels?.newsletterTabTitle || 'Newsletter'}</span>
         </button>
       </div>
 
@@ -103,7 +125,15 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
             onSubmitTicket={handleTicketSubmit}
           />
         )}
+        {activeTab === 'newsletter' && (
+          <NewsletterTab
+            appId={appId}
+            user={user}
+            onSubmit={handleNewsletterSubmit}
+          />
+        )}
       </div>
     </div>
   );
 };
+

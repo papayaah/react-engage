@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { FeedbackWidgetProps } from '../types';
 import { useFeedbackTheme } from '../hooks/useFeedbackTheme';

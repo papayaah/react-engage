@@ -1,6 +1,6 @@
 export type WidgetTheme = 'inherit' | 'system' | 'light' | 'dark';
 export type WidgetPosition = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
-export type TabId = 'faq' | 'feedback' | 'bug' | 'suggestion' | 'ticket';
+export type TabId = 'faq' | 'feedback' | 'bug' | 'suggestion' | 'ticket' | 'newsletter';
 
 export type BugSeverity = 'low' | 'medium' | 'high' | 'critical';
 export type SuggestionCategory = 'ui_ux' | 'new_feature' | 'performance' | 'integrations' | 'other';
@@ -71,6 +71,14 @@ export interface TicketPayload {
   timestamp: string;
 }
 
+export interface NewsletterPayload {
+  appId: string;
+  email: string;
+  name?: string;
+  frequency?: 'all' | 'weekly' | 'monthly';
+  timestamp: string;
+}
+
 export interface FaqItem {
   id: string;
   question: string;
@@ -87,6 +95,7 @@ export interface CustomLabels {
   bugTabTitle?: string;
   suggestionTabTitle?: string;
   ticketTabTitle?: string;
+  newsletterTabTitle?: string;
   submitButton?: string;
   successMessage?: string;
 }
@@ -102,7 +111,7 @@ export interface FeedbackWidgetProps {
   user?: WidgetUser;
   /** FAQs/help items list */
   faqs?: FaqItem[];
-  /** Enabled tabs. Defaults to ['faq', 'feedback'] */
+  /** Enabled tabs. Defaults to ['faq', 'feedback', 'newsletter'] */
   enabledTabs?: TabId[];
   /** Initial active tab when drawer opens */
   defaultTab?: TabId;
@@ -120,6 +129,11 @@ export interface FeedbackWidgetProps {
   onSubmitSuggestion?: (payload: SuggestionPayload) => Promise<void> | void;
   /** Callback triggered when a support ticket is submitted */
   onSubmitTicket?: (payload: TicketPayload) => Promise<void> | void;
+  /** Callback triggered when a user subscribes to the newsletter */
+  onSubmitNewsletter?: (payload: NewsletterPayload) => Promise<void> | void;
   /** Optional custom trigger render button */
   renderTrigger?: (props: { isOpen: boolean; toggle: () => void }) => React.ReactNode;
 }
+
+export type EngageWidgetProps = FeedbackWidgetProps;
+

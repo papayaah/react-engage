@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { TicketPayload, WidgetUser } from '../../types';
-import { CheckCircle2, AlertCircle, LifeBuoy } from 'lucide-react';
+import { AlertCircle, LifeBuoy } from 'lucide-react';
 
 interface TicketTabProps {
   appId: string;
