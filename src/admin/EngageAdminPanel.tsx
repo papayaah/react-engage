@@ -800,25 +800,91 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
               </div>
 
               {/* Subscriber List Preview Pills */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, maxHeight: 80, overflowY: 'auto' }}>
-                {tickets
-                  .filter((t) => t.userEmail)
-                  .map((t, idx) => (
-                    <span
-                      key={`${t.userEmail}-${idx}`}
-                      style={{
-                        fontSize: 11,
-                        padding: '3px 8px',
-                        borderRadius: 12,
-                        backgroundColor: 'var(--card-bg, #ffffff)',
-                        border: '1px solid var(--card-border, #cbd5e1)',
-                        color: 'var(--foreground, #0f172a)',
-                      }}
-                    >
-                      {t.userEmail}
-                    </span>
-                  ))}
-              </div>
+              {(() => {
+                const subscriberEmails = Array.from(
+                  new Set(tickets.filter((t) => t.userEmail).map((t) => t.userEmail as string))
+                );
+                const MAX_PREVIEW = 6;
+                const remaining = subscriberEmails.length - MAX_PREVIEW;
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {subscriberEmails.slice(0, MAX_PREVIEW).map((email, idx) => (
+                        <span
+                          key={`${email}-${idx}`}
+                          style={{
+                            fontSize: 11,
+                            padding: '3px 8px',
+                            borderRadius: 12,
+                            backgroundColor: 'var(--card-bg, #ffffff)',
+                            border: '1px solid var(--card-border, #cbd5e1)',
+                            color: 'var(--foreground, #0f172a)',
+                          }}
+                        >
+                          {email}
+                        </span>
+                      ))}
+
+                      {remaining > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const el = document.getElementById('engage-subscribers-expanded');
+                            if (el) el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+                          }}
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 600,
+                            padding: '3px 10px',
+                            borderRadius: 12,
+                            backgroundColor: 'var(--accent, #3b82f6)',
+                            color: '#ffffff',
+                            border: 'none',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          +{remaining} more subscribers
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Expandable Full List Drawer for large audiences */}
+                    {remaining > 0 && (
+                      <div
+                        id="engage-subscribers-expanded"
+                        style={{
+                          display: 'none',
+                          flexWrap: 'wrap',
+                          gap: 6,
+                          marginTop: 10,
+                          padding: 10,
+                          borderRadius: 6,
+                          backgroundColor: 'var(--card-bg, #ffffff)',
+                          border: '1px solid var(--card-border, #cbd5e1)',
+                          maxHeight: 140,
+                          overflowY: 'auto',
+                        }}
+                      >
+                        {subscriberEmails.slice(MAX_PREVIEW).map((email, idx) => (
+                          <span
+                            key={`expanded-${email}-${idx}`}
+                            style={{
+                              fontSize: 11,
+                              padding: '2px 8px',
+                              borderRadius: 10,
+                              backgroundColor: 'var(--muted-bg, #f1f5f9)',
+                              color: 'var(--foreground, #0f172a)',
+                            }}
+                          >
+                            {email}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
 
             {broadcastStatus && (
