@@ -327,7 +327,13 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
               name: payload?.name || null,
               frequency: payload?.frequency || 'all',
               subscribedAt: new Date().toISOString(),
-            }).onConflictDoNothing();
+            }).onConflictDoUpdate({
+              target: tables.subscribers.email,
+              set: {
+                name: payload?.name || null,
+                frequency: payload?.frequency || 'all',
+              },
+            });
           }
 
           if (tables?.tickets) {

@@ -154,7 +154,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
 
   useEffect(() => {
     fetchTickets();
-  }, [apiEndpoint]);
+  }, [apiEndpoint, activeTab, audienceSubTab]);
 
   const handleTemplateChange = (id: 'welcome' | 'ticket_reply' | 'newsletter') => {
     setSelectedTemplateId(id);
@@ -833,7 +833,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                 }}
               >
                 <Users size={14} />
-                <span>Subscribers List ({tickets.filter((t) => t.userEmail).length})</span>
+                <span>Subscribers List ({subscribers.length > 0 ? subscribers.length : tickets.filter((t) => t.userEmail).length})</span>
               </button>
 
               <button
@@ -884,7 +884,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                       <Mail size={15} style={{ color: 'var(--accent, #3b82f6)' }} />
                       <span>Target Audience:</span>
                       <span style={{ color: '#10b981', fontWeight: 700 }}>
-                        {tickets.filter((t) => t.userEmail).length} Opted-in Subscribers
+                        {subscribers.length > 0 ? subscribers.length : tickets.filter((t) => t.userEmail).length} Opted-in Subscribers
                       </span>
                     </div>
                   </div>
@@ -895,9 +895,9 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
 
                   {/* Subscriber List Preview Pills */}
                   {(() => {
-                    const subscriberEmails = Array.from(
-                      new Set(tickets.filter((t) => t.userEmail).map((t) => t.userEmail as string))
-                    );
+                    const subscriberEmails = subscribers.length > 0
+                      ? Array.from(new Set(subscribers.map((s) => s.email).filter(Boolean)))
+                      : Array.from(new Set(tickets.filter((t) => t.userEmail).map((t) => t.userEmail as string)));
                     const MAX_PREVIEW = 6;
                     const remaining = subscriberEmails.length - MAX_PREVIEW;
 
