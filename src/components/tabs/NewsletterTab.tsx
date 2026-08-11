@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NewsletterPayload, WidgetUser } from '../../types';
-import { Mail, CheckCircle2, AlertCircle, UserMinus } from 'lucide-react';
+import { Mail, CheckCircle2, AlertCircle, UserMinus, RotateCcw } from 'lucide-react';
 
 interface NewsletterTabProps {
   appId: string;
@@ -11,14 +11,38 @@ interface NewsletterTabProps {
 }
 
 export const NewsletterTab: React.FC<NewsletterTabProps> = ({ appId, user, onSubmit }) => {
-  const [email, setEmail] = useState(user?.email || '');
+  const [email, setEmail] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('engage_subscribed_email');
+      if (saved) return saved;
+    }
+    return user?.email || '';
+  });
+
   const [name, setName] = useState(user?.name || '');
   const [frequency, setFrequency] = useState<'all' | 'weekly' | 'monthly'>('all');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const [isSubmitted, setIsSubmitted] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('engage_is_subscribed') === 'true';
+    }
+    return false;
+  });
+
   const [isUnsubscribed, setIsUnsubscribed] = useState(false);
   const [showManagePrefs, setShowManagePrefs] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Sync user prop if logged in and no local override exists
+  useEffect(() => {
+    if (user?.email && typeof window !== 'undefined' && !localStorage.getItem('engage_subscribed_email')) {
+      setEmail(user.email);
+    }
+    if (user?.name && !name) {
+      setName(user.name);
+    }
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +65,12 @@ export const NewsletterTab: React.FC<NewsletterTabProps> = ({ appId, user, onSub
       };
 
       await onSubmit(payload);
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('engage_subscribed_email', email.trim());
+        localStorage.setItem('engage_is_subscribed', 'true');
+      }
+
       setIsSubmitted(true);
       setShowManagePrefs(false);
       setIsUnsubscribed(false);
@@ -65,6 +95,11 @@ export const NewsletterTab: React.FC<NewsletterTabProps> = ({ appId, user, onSub
       };
 
       await onSubmit(payload);
+
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('engage_is_subscribed');
+      }
+
       setIsUnsubscribed(true);
       setIsSubmitted(false);
       setShowManagePrefs(false);
@@ -84,7 +119,7 @@ export const NewsletterTab: React.FC<NewsletterTabProps> = ({ appId, user, onSub
         </div>
         <h3 style={{ margin: '0 0 6px 0', fontSize: 18, color: 'var(--rfw-fg)' }}>You've Unsubscribed</h3>
         <p style={{ margin: '0 0 16px 0', fontSize: 14, color: 'var(--rfw-muted)', lineHeight: 1.4 }}>
-          You have been removed from our newsletter list. You will no longer receive product updates.
+          You have been removed from our newsletter list ({email}). You will no longer receive product updates.
         </p>
         <button
           className="rfw-btn-submit"
@@ -109,9 +144,12 @@ export const NewsletterTab: React.FC<NewsletterTabProps> = ({ appId, user, onSub
           <CheckCircle2 size={28} />
         </div>
         <h3 style={{ margin: '0 0 6px 0', fontSize: 18, color: 'var(--rfw-fg)' }}>You're Subscribed!</h3>
-        <p style={{ margin: '0 0 16px 0', fontSize: 14, color: 'var(--rfw-muted)', lineHeight: 1.4 }}>
+        <p style={{ margin: '0 0 6px 0', fontSize: 14, color: 'var(--rfw-muted)', lineHeight: 1.4 }}>
           Thank you for subscribing! Check your inbox for updates and product releases.
         </p>
+        <div style={{ fontSize: 12, color: 'var(--rfw-accent)', fontWeight: 600, marginBottom: 16 }}>
+          Subscribed Email: {email}
+        </div>
         <button
           className="rfw-btn-submit"
           style={{ width: 'auto', padding: '8px 20px' }}
@@ -157,7 +195,28 @@ export const NewsletterTab: React.FC<NewsletterTabProps> = ({ appId, user, onSub
       </div>
 
       <div className="rfw-field">
-        <label className="rfw-label">Your Email</label>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+          <label className="rfw-label" style={{ margin: 0 }}>Your Email</label>
+          {user?.email && email !== user.email && (
+            <button
+              type="button"
+              onClick={() => setEmail(user.email || '')}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--rfw-accent)',
+                fontSize: 11,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 3,
+                padding: 0,
+              }}
+            >
+              <RotateCcw size={11} /> Use account email ({user.email})
+            </button>
+          )}
+        </div>
         <input
           type="email"
           className="rfw-input"
