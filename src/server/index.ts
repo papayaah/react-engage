@@ -163,13 +163,14 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
     if (action === 'list_tickets') {
       if (db && tables?.tickets) {
         try {
-          const dbTickets = await db.select().from(tables.tickets);
-          return NextResponse.json({ tickets: dbTickets.length > 0 ? dbTickets : globalTicketStore });
+          const { ne } = await import('drizzle-orm');
+          const dbTickets = await db.select().from(tables.tickets).where(ne(tables.tickets.type, 'newsletter'));
+          return NextResponse.json({ tickets: dbTickets.length > 0 ? dbTickets : globalTicketStore.filter(t => t.type !== 'newsletter') });
         } catch (e) {
           console.error('[Engage API DB Fetch Error]:', e);
         }
       }
-      return NextResponse.json({ tickets: globalTicketStore });
+      return NextResponse.json({ tickets: globalTicketStore.filter(t => t.type !== 'newsletter') });
     }
 
     return NextResponse.json({ tickets: globalTicketStore });
@@ -359,7 +360,7 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
             });
           }
 
-          if (tables?.tickets) {
+          if (tables?.tickets && type !== 'newsletter') {
             await db.insert(tables.tickets).values(newTicketRecord);
           }
         } catch (e) {
@@ -367,8 +368,10 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
         }
       }
 
-      // Always save to memory store for instant local availability
-      globalTicketStore.unshift(newTicketRecord as StoredTicket);
+      // Always save to memory store for non-newsletter submissions
+      if (type !== 'newsletter') {
+        globalTicketStore.unshift(newTicketRecord as StoredTicket);
+      }
 
       if (apiKey) {
         if (type === 'newsletter') {
