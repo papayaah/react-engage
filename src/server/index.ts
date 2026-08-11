@@ -280,6 +280,21 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
         createdAt: new Date().toISOString(),
       };
 
+      // Handle Unsubscribe Action
+      if (type === 'newsletter' && payload?.action === 'unsubscribe' && userEmail) {
+        if (db && tables?.subscribers) {
+          try {
+            const { eq } = await import('drizzle-orm');
+            await db.delete(tables.subscribers).where(eq(tables.subscribers.email, userEmail));
+          } catch (e) {
+            console.error('[Engage API DB Unsubscribe Error]:', e);
+          }
+        }
+        const idx = globalTicketStore.findIndex((t) => t.userEmail === userEmail);
+        if (idx !== -1) globalTicketStore.splice(idx, 1);
+        return NextResponse.json({ success: true, unsubscribed: true, email: userEmail });
+      }
+
       // Persist in DB if connected
       if (db) {
         try {

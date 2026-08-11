@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { NewsletterPayload, WidgetUser } from '../../types';
-import { Mail, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Mail, CheckCircle2, AlertCircle, UserMinus } from 'lucide-react';
 
 interface NewsletterTabProps {
   appId: string;
@@ -16,6 +16,8 @@ export const NewsletterTab: React.FC<NewsletterTabProps> = ({ appId, user, onSub
   const [frequency, setFrequency] = useState<'all' | 'weekly' | 'monthly'>('all');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isUnsubscribed, setIsUnsubscribed] = useState(false);
+  const [showManagePrefs, setShowManagePrefs] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,11 +36,14 @@ export const NewsletterTab: React.FC<NewsletterTabProps> = ({ appId, user, onSub
         email: email.trim(),
         name: name.trim() || undefined,
         frequency,
+        action: 'subscribe',
         timestamp: new Date().toISOString(),
       };
 
       await onSubmit(payload);
       setIsSubmitted(true);
+      setShowManagePrefs(false);
+      setIsUnsubscribed(false);
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Failed to subscribe');
     } finally {
@@ -46,20 +51,71 @@ export const NewsletterTab: React.FC<NewsletterTabProps> = ({ appId, user, onSub
     }
   };
 
-  if (isSubmitted) {
+  const handleUnsubscribe = async () => {
+    if (!email.trim()) return;
+    setIsSubmitting(true);
+    setErrorMsg(null);
+
+    try {
+      const payload: NewsletterPayload = {
+        appId,
+        email: email.trim(),
+        action: 'unsubscribe',
+        timestamp: new Date().toISOString(),
+      };
+
+      await onSubmit(payload);
+      setIsUnsubscribed(true);
+      setIsSubmitted(false);
+      setShowManagePrefs(false);
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : 'Failed to unsubscribe');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // State 1: Unsubscribed Confirmation Screen
+  if (isUnsubscribed) {
     return (
-      <div className="rfw-success-box">
-        <div className="rfw-success-icon" style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981' }}>
+      <div className="rfw-success-box" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '24px 16px' }}>
+        <div className="rfw-success-icon" style={{ backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', marginBottom: 12, padding: 12, borderRadius: '50%' }}>
+          <UserMinus size={28} />
+        </div>
+        <h3 style={{ margin: '0 0 6px 0', fontSize: 18, color: 'var(--rfw-fg)' }}>You've Unsubscribed</h3>
+        <p style={{ margin: '0 0 16px 0', fontSize: 14, color: 'var(--rfw-muted)', lineHeight: 1.4 }}>
+          You have been removed from our newsletter list. You will no longer receive product updates.
+        </p>
+        <button
+          className="rfw-btn-submit"
+          style={{ width: 'auto', padding: '8px 20px' }}
+          onClick={() => {
+            setIsUnsubscribed(false);
+            setIsSubmitted(false);
+            setShowManagePrefs(false);
+          }}
+        >
+          Re-subscribe to Newsletter
+        </button>
+      </div>
+    );
+  }
+
+  // State 2: Subscribed Confirmation Screen (Default Success)
+  if (isSubmitted && !showManagePrefs) {
+    return (
+      <div className="rfw-success-box" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '24px 16px' }}>
+        <div className="rfw-success-icon" style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981', marginBottom: 12, padding: 12, borderRadius: '50%' }}>
           <CheckCircle2 size={28} />
         </div>
-        <h3 style={{ margin: 0, fontSize: 18, color: 'var(--rfw-fg)' }}>You're Subscribed!</h3>
-        <p style={{ margin: 0, fontSize: 14, color: 'var(--rfw-muted)' }}>
+        <h3 style={{ margin: '0 0 6px 0', fontSize: 18, color: 'var(--rfw-fg)' }}>You're Subscribed!</h3>
+        <p style={{ margin: '0 0 16px 0', fontSize: 14, color: 'var(--rfw-muted)', lineHeight: 1.4 }}>
           Thank you for subscribing! Check your inbox for updates and product releases.
         </p>
         <button
           className="rfw-btn-submit"
-          style={{ width: 'auto', padding: '8px 20px', marginTop: 12 }}
-          onClick={() => setIsSubmitted(false)}
+          style={{ width: 'auto', padding: '8px 20px' }}
+          onClick={() => setShowManagePrefs(true)}
         >
           Manage Preferences
         </button>
@@ -67,6 +123,7 @@ export const NewsletterTab: React.FC<NewsletterTabProps> = ({ appId, user, onSub
     );
   }
 
+  // State 3: Form / Preference Editing Mode
   return (
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {errorMsg && (
@@ -92,8 +149,10 @@ export const NewsletterTab: React.FC<NewsletterTabProps> = ({ appId, user, onSub
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, padding: '10px 12px', backgroundColor: 'var(--rfw-card-bg)', borderRadius: 8, border: '1px solid var(--rfw-card-border)' }}>
         <Mail size={22} style={{ color: 'var(--rfw-accent)', flexShrink: 0 }} />
         <div style={{ fontSize: 12, color: 'var(--rfw-fg)' }}>
-          <strong>Product Updates & Newsletter</strong>
-          <div style={{ color: 'var(--rfw-muted)', marginTop: 2 }}>Get new features, tips, and market insights straight to your inbox.</div>
+          <strong>{showManagePrefs ? 'Update Subscription Preferences' : 'Product Updates & Newsletter'}</strong>
+          <div style={{ color: 'var(--rfw-muted)', marginTop: 2 }}>
+            {showManagePrefs ? 'Modify frequency or unsubscribe from emails.' : 'Get new features, tips, and market insights straight to your inbox.'}
+          </div>
         </div>
       </div>
 
@@ -133,9 +192,31 @@ export const NewsletterTab: React.FC<NewsletterTabProps> = ({ appId, user, onSub
         </select>
       </div>
 
-      <button type="submit" className="rfw-btn-submit" disabled={isSubmitting} style={{ marginTop: 'auto' }}>
-        {isSubmitting ? 'Subscribing...' : 'Subscribe to Newsletter'}
-      </button>
+      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <button type="submit" className="rfw-btn-submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Saving...' : showManagePrefs ? 'Save Updated Preferences' : 'Subscribe to Newsletter'}
+        </button>
+
+        {showManagePrefs && (
+          <button
+            type="button"
+            onClick={handleUnsubscribe}
+            disabled={isSubmitting}
+            style={{
+              backgroundColor: 'transparent',
+              color: 'var(--rfw-loss, #ef4444)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              borderRadius: 8,
+              padding: '8px 12px',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Unsubscribe from Newsletter
+          </button>
+        )}
+      </div>
     </form>
   );
 };

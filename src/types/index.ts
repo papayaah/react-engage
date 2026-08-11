@@ -76,6 +76,7 @@ export interface NewsletterPayload {
   email: string;
   name?: string;
   frequency?: 'all' | 'weekly' | 'monthly';
+  action?: 'subscribe' | 'unsubscribe';
   timestamp: string;
 }
 
