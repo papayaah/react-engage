@@ -809,7 +809,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
 
                 return (
                   <div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
                       {subscriberEmails.slice(0, MAX_PREVIEW).map((email, idx) => (
                         <span
                           key={`${email}-${idx}`}
@@ -830,8 +830,8 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                         <button
                           type="button"
                           onClick={() => {
-                            const el = document.getElementById('engage-subscribers-expanded');
-                            if (el) el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+                            const el = document.getElementById('engage-subscribers-table');
+                            if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
                           }}
                           style={{
                             fontSize: 11,
@@ -844,44 +844,69 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                             cursor: 'pointer',
                           }}
                         >
-                          +{remaining} more subscribers
+                          +{remaining} more (View All)
                         </button>
                       )}
-                    </div>
 
-                    {/* Expandable Full List Drawer for large audiences */}
-                    {remaining > 0 && (
-                      <div
-                        id="engage-subscribers-expanded"
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const csvContent = 'data:text/csv;charset=utf-8,' + ['Email,SubscribedAt'].concat(subscriberEmails.map((e) => `${e},${new Date().toISOString()}`)).join('\n');
+                          const encodedUri = encodeURI(csvContent);
+                          const link = document.createElement('a');
+                          link.setAttribute('href', encodedUri);
+                          link.setAttribute('download', 'subscribers.csv');
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                        }}
                         style={{
-                          display: 'none',
-                          flexWrap: 'wrap',
-                          gap: 6,
-                          marginTop: 10,
-                          padding: 10,
+                          marginLeft: 'auto',
+                          fontSize: 11,
+                          fontWeight: 600,
+                          padding: '3px 10px',
                           borderRadius: 6,
                           backgroundColor: 'var(--card-bg, #ffffff)',
                           border: '1px solid var(--card-border, #cbd5e1)',
-                          maxHeight: 140,
-                          overflowY: 'auto',
+                          color: 'var(--foreground, #0f172a)',
+                          cursor: 'pointer',
                         }}
                       >
-                        {subscriberEmails.slice(MAX_PREVIEW).map((email, idx) => (
-                          <span
-                            key={`expanded-${email}-${idx}`}
-                            style={{
-                              fontSize: 11,
-                              padding: '2px 8px',
-                              borderRadius: 10,
-                              backgroundColor: 'var(--muted-bg, #f1f5f9)',
-                              color: 'var(--foreground, #0f172a)',
-                            }}
-                          >
-                            {email}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                        📥 Export CSV
+                      </button>
+                    </div>
+
+                    {/* Expandable Subscribers Table for inspecting full audience */}
+                    <div
+                      id="engage-subscribers-table"
+                      style={{
+                        display: 'none',
+                        marginTop: 12,
+                        padding: 10,
+                        borderRadius: 6,
+                        backgroundColor: 'var(--card-bg, #ffffff)',
+                        border: '1px solid var(--card-border, #cbd5e1)',
+                        maxHeight: 180,
+                        overflowY: 'auto',
+                      }}
+                    >
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                        <thead>
+                          <tr style={{ borderBottom: '1px solid var(--card-border, #e2e8f0)', textAlign: 'left', color: 'var(--muted, #64748b)' }}>
+                            <th style={{ padding: '6px 8px' }}>Subscriber Email</th>
+                            <th style={{ padding: '6px 8px' }}>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {subscriberEmails.map((email, idx) => (
+                            <tr key={`table-${email}-${idx}`} style={{ borderBottom: '1px solid var(--card-border, #f1f5f9)' }}>
+                              <td style={{ padding: '6px 8px', color: 'var(--foreground, #0f172a)' }}>{email}</td>
+                              <td style={{ padding: '6px 8px', color: '#10b981', fontWeight: 600 }}>Active</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 );
               })()}
