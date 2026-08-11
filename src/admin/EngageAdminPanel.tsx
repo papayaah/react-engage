@@ -121,8 +121,9 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
   const [broadcastStatus, setBroadcastStatus] = useState<string | null>(null);
 
   const [subscribers, setSubscribers] = useState<any[]>([]);
+  const [broadcasts, setBroadcasts] = useState<any[]>([]);
 
-  // Load tickets and subscribers from API if available
+  // Load tickets, subscribers, and broadcast history from API
   const fetchTickets = async () => {
     setIsLoading(true);
     try {
@@ -143,6 +144,15 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
         const subData = await subRes.json();
         if (Array.isArray(subData.subscribers)) {
           setSubscribers(subData.subscribers);
+        }
+      }
+
+      // Fetch broadcast history list
+      const bcastRes = await fetch(`${apiEndpoint}?action=list_broadcasts`);
+      if (bcastRes.ok) {
+        const bcastData = await bcastRes.json();
+        if (Array.isArray(bcastData.broadcasts)) {
+          setBroadcasts(bcastData.broadcasts);
         }
       }
     } catch (e) {
@@ -251,6 +261,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
       }
       setBroadcastStatus('Broadcast dispatched to subscribers!');
       setBroadcastBody('');
+      fetchTickets();
     } catch (e) {
       setBroadcastStatus('Dispatched via email provider API.');
     } finally {
@@ -1180,17 +1191,27 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                       </tr>
                     </thead>
                     <tbody>
-                      <tr style={{ borderBottom: '1px solid var(--card-border, #f1f5f9)' }}>
-                        <td style={{ padding: '12px 14px', fontWeight: 600, color: 'var(--foreground, #0f172a)' }}>
-                          {broadcastSubject || 'New Product Updates'}
-                        </td>
-                        <td style={{ padding: '12px 14px', color: '#10b981', fontWeight: 600 }}>
-                          {tickets.filter((t) => t.userEmail).length} Recipients
-                        </td>
-                        <td style={{ padding: '12px 14px', color: 'var(--muted, #64748b)' }}>
-                          {new Date().toLocaleDateString()} {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </td>
-                      </tr>
+                      {broadcasts.length > 0 ? (
+                        broadcasts.map((bcast, idx) => (
+                          <tr key={`bcast-${bcast.id || idx}-${idx}`} style={{ borderBottom: '1px solid var(--card-border, #f1f5f9)' }}>
+                            <td style={{ padding: '12px 14px', fontWeight: 600, color: 'var(--foreground, #0f172a)' }}>
+                              {bcast.subject}
+                            </td>
+                            <td style={{ padding: '12px 14px', color: '#10b981', fontWeight: 600 }}>
+                              {bcast.recipientCount || 0} Recipients
+                            </td>
+                            <td style={{ padding: '12px 14px', color: 'var(--muted, #64748b)' }}>
+                              {new Date(bcast.sentAt || Date.now()).toLocaleString()}
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={3} style={{ padding: 24, textAlign: 'center', color: 'var(--muted, #64748b)' }}>
+                            No broadcast emails dispatched yet. Compose and send your first newsletter above!
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
