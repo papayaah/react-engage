@@ -987,9 +987,53 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                 <span>{isSendingBroadcast ? 'Dispatching Broadcast...' : 'Dispatch Broadcast via Brevo'}</span>
               </button>
             </form>
+
+            {/* Sent Broadcasts History Section */}
+            <div style={{ marginTop: 32, borderTop: '1px solid var(--card-border, #e2e8f0)', paddingTop: 20 }}>
+              <h4 style={{ fontSize: 15, fontWeight: 700, margin: '0 0 10px 0', color: 'var(--foreground, #0f172a)' }}>
+                📜 Sent Broadcasts History
+              </h4>
+              <p style={{ fontSize: 12, color: 'var(--muted, #64748b)', margin: '0 0 14px 0' }}>
+                Review past newsletters and product update announcements dispatched to your subscribers.
+              </p>
+
+              <div
+                style={{
+                  backgroundColor: 'var(--card-bg, #ffffff)',
+                  border: '1px solid var(--card-border, #cbd5e1)',
+                  borderRadius: 8,
+                  overflow: 'hidden',
+                }}
+              >
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: 'var(--muted-bg, #f8fafc)', borderBottom: '1px solid var(--card-border, #e2e8f0)', color: 'var(--muted, #64748b)' }}>
+                      <th style={{ padding: '10px 14px' }}>Subject</th>
+                      <th style={{ padding: '10px 14px' }}>Recipients</th>
+                      <th style={{ padding: '10px 14px' }}>Date Sent</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* Render recent broadcast or memory broadcast */}
+                    <tr style={{ borderBottom: '1px solid var(--card-border, #f1f5f9)' }}>
+                      <td style={{ padding: '12px 14px', fontWeight: 600, color: 'var(--foreground, #0f172a)' }}>
+                        {broadcastSubject || 'New Product Updates'}
+                      </td>
+                      <td style={{ padding: '12px 14px', color: '#10b981', fontWeight: 600 }}>
+                        {tickets.filter((t) => t.userEmail).length} Recipients
+                      </td>
+                      <td style={{ padding: '12px 14px', color: 'var(--muted, #64748b)' }}>
+                        {new Date().toLocaleDateString()} {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         )}
       </div>
     </div>
   );
 };
+

@@ -19,6 +19,15 @@ export interface StoredTicket {
   };
 }
 
+export interface BroadcastRecord {
+  id: string;
+  appId?: string;
+  subject: string;
+  content: string;
+  recipientCount: number;
+  sentAt: string;
+}
+
 export interface EngageServerConfig {
   apiKey?: string;
   adminEmail?: string;
@@ -29,8 +38,11 @@ export interface EngageServerConfig {
     tickets?: any;
     subscribers?: any;
     templates?: any;
+    broadcasts?: any;
   };
 }
+
+const globalBroadcastStore: BroadcastRecord[] = [];
 
 // Memory store fallback for standalone app without DB
 const globalTicketStore: StoredTicket[] = [
@@ -93,6 +105,18 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
   async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const action = searchParams.get('action');
+
+    if (action === 'list_broadcasts') {
+      if (db && tables?.broadcasts) {
+        try {
+          const dbBroadcasts = await db.select().from(tables.broadcasts);
+          return NextResponse.json({ broadcasts: dbBroadcasts.length > 0 ? dbBroadcasts : globalBroadcastStore });
+        } catch (e) {
+          console.error('[Engage API DB Broadcast Fetch Error]:', e);
+        }
+      }
+      return NextResponse.json({ broadcasts: globalBroadcastStore });
+    }
 
     if (action === 'list_tickets') {
       if (db && tables?.tickets) {
@@ -188,6 +212,25 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
             .map((t) => ({ email: t.userEmail as string }));
         }
 
+        // Record sent broadcast entry in DB / memory
+        const broadcastRecord: BroadcastRecord = {
+          id: `bcast_${Date.now()}`,
+          appId: 'app',
+          subject,
+          content: broadcastBody,
+          recipientCount: subscribers.length,
+          sentAt: new Date().toISOString(),
+        };
+
+        if (db && tables?.broadcasts) {
+          try {
+            await db.insert(tables.broadcasts).values(broadcastRecord);
+          } catch (e) {
+            console.error('[Engage API DB Broadcast Insert Error]:', e);
+          }
+        }
+        globalBroadcastStore.unshift(broadcastRecord);
+
         if (apiKey && subscribers.length > 0) {
           await fetch('https://api.brevo.com/v3/smtp/email', {
             method: 'POST',
@@ -211,7 +254,7 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
           });
         }
 
-        return NextResponse.json({ success: true, recipientCount: subscribers.length });
+        return NextResponse.json({ success: true, recipientCount: subscribers.length, broadcast: broadcastRecord });
       }
 
       // 3. WIDGET SUBMISSION: Bug, Ticket, Suggestion, or Newsletter
