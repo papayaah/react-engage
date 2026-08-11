@@ -96,7 +96,8 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
   onSaveTemplate,
   onSendBroadcast,
 }) => {
-  const [activeTab, setActiveTab] = useState<'inbox' | 'subscribers' | 'templates' | 'newsletter'>(defaultTab);
+  const [activeTab, setActiveTab] = useState<'inbox' | 'templates' | 'newsletter'>(defaultTab as any);
+  const [audienceSubTab, setAudienceSubTab] = useState<'broadcast' | 'subscribers' | 'history'>('broadcast');
   const [subscriberSearch, setSubscriberSearch] = useState('');
   const [tickets, setTickets] = useState<TicketItem[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<TicketItem | null>(null);
@@ -317,7 +318,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
           </button>
 
           <button
-            onClick={() => setActiveTab('subscribers')}
+            onClick={() => setActiveTab('newsletter')}
             style={{
               padding: '6px 14px',
               borderRadius: 6,
@@ -328,23 +329,12 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
               display: 'flex',
               alignItems: 'center',
               gap: 6,
-              backgroundColor: activeTab === 'subscribers' ? 'var(--accent, #3b82f6)' : 'transparent',
-              color: activeTab === 'subscribers' ? '#ffffff' : 'var(--muted, #64748b)',
+              backgroundColor: activeTab === 'newsletter' ? 'var(--accent, #3b82f6)' : 'transparent',
+              color: activeTab === 'newsletter' ? '#ffffff' : 'var(--muted, #64748b)',
             }}
           >
-            <Users size={14} />
-            <span>Subscribers</span>
-            <span
-              style={{
-                fontSize: 10,
-                padding: '1px 5px',
-                borderRadius: 10,
-                backgroundColor: activeTab === 'subscribers' ? 'rgba(255,255,255,0.25)' : 'var(--muted-bg, #f1f5f9)',
-                color: activeTab === 'subscribers' ? '#ffffff' : 'var(--foreground, #0f172a)',
-              }}
-            >
-              {tickets.filter((t) => t.userEmail).length}
-            </span>
+            <Mail size={14} />
+            <span>Audience & Newsletters</span>
           </button>
 
           <button
@@ -365,26 +355,6 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
           >
             <FileText size={14} />
             <span>Email Templates</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('newsletter')}
-            style={{
-              padding: '6px 14px',
-              borderRadius: 6,
-              border: 'none',
-              fontSize: 13,
-              fontWeight: 500,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              backgroundColor: activeTab === 'newsletter' ? 'var(--accent, #3b82f6)' : 'transparent',
-              color: activeTab === 'newsletter' ? '#ffffff' : 'var(--muted, #64748b)',
-            }}
-          >
-            <Mail size={14} />
-            <span>Newsletter Broadcast</span>
           </button>
         </div>
       </div>
@@ -669,119 +639,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
           </>
         )}
 
-        {/* TAB 2: SUBSCRIBERS DIRECTORY */}
-        {activeTab === 'subscribers' && (
-          <div style={{ flex: 1, padding: 24, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <div>
-                <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 4px 0', color: 'var(--foreground, #0f172a)' }}>
-                  Opted-in Subscribers Directory
-                </h3>
-                <p style={{ fontSize: 13, color: 'var(--muted, #64748b)', margin: 0 }}>
-                  View, search, and export users who opted into product announcements and newsletters.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  const subList = Array.from(new Set(tickets.filter((t) => t.userEmail).map((t) => t.userEmail as string)));
-                  const csvContent = 'data:text/csv;charset=utf-8,' + ['Email,SubscribedAt,Status'].concat(subList.map((e) => `${e},${new Date().toISOString()},Active`)).join('\n');
-                  const encodedUri = encodeURI(csvContent);
-                  const link = document.createElement('a');
-                  link.setAttribute('href', encodedUri);
-                  link.setAttribute('download', 'subscribers.csv');
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                }}
-                style={{
-                  padding: '8px 16px',
-                  borderRadius: 6,
-                  backgroundColor: 'var(--accent, #3b82f6)',
-                  color: '#ffffff',
-                  border: 'none',
-                  fontWeight: 600,
-                  fontSize: 13,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                }}
-              >
-                <Download size={15} />
-                <span>Export Subscribers CSV</span>
-              </button>
-            </div>
-
-            {/* Search Input Bar */}
-            <div style={{ position: 'relative', marginBottom: 16, maxWidth: 400 }}>
-              <Search size={15} style={{ position: 'absolute', left: 12, top: 11, color: 'var(--muted, #94a3b8)' }} />
-              <input
-                type="text"
-                value={subscriberSearch}
-                onChange={(e) => setSubscriberSearch(e.target.value)}
-                placeholder="Search subscriber by email or name..."
-                style={{
-                  width: '100%',
-                  padding: '8px 12px 8px 36px',
-                  borderRadius: 6,
-                  border: '1px solid var(--card-border, #cbd5e1)',
-                  backgroundColor: 'var(--card-bg, #ffffff)',
-                  color: 'var(--foreground, #0f172a)',
-                  fontSize: 13,
-                }}
-              />
-            </div>
-
-            {/* Subscribers Table */}
-            <div
-              style={{
-                backgroundColor: 'var(--card-bg, #ffffff)',
-                border: '1px solid var(--card-border, #cbd5e1)',
-                borderRadius: 8,
-                overflow: 'hidden',
-              }}
-            >
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left' }}>
-                <thead>
-                  <tr style={{ backgroundColor: 'var(--muted-bg, #f8fafc)', borderBottom: '1px solid var(--card-border, #e2e8f0)', color: 'var(--muted, #64748b)' }}>
-                    <th style={{ padding: '10px 14px' }}>Subscriber Email</th>
-                    <th style={{ padding: '10px 14px' }}>User Name</th>
-                    <th style={{ padding: '10px 14px' }}>Status</th>
-                    <th style={{ padding: '10px 14px' }}>Source / App</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tickets
-                    .filter((t) => t.userEmail && (
-                      !subscriberSearch ||
-                      t.userEmail.toLowerCase().includes(subscriberSearch.toLowerCase()) ||
-                      (t.userName && t.userName.toLowerCase().includes(subscriberSearch.toLowerCase()))
-                    ))
-                    .map((t, idx) => (
-                      <tr key={`sub-tab-${t.id}-${idx}`} style={{ borderBottom: '1px solid var(--card-border, #f1f5f9)' }}>
-                        <td style={{ padding: '12px 14px', fontWeight: 600, color: 'var(--foreground, #0f172a)' }}>
-                          {t.userEmail}
-                        </td>
-                        <td style={{ padding: '12px 14px', color: 'var(--muted, #64748b)' }}>
-                          {t.userName || 'N/A'}
-                        </td>
-                        <td style={{ padding: '12px 14px', color: '#10b981', fontWeight: 600 }}>
-                          Active
-                        </td>
-                        <td style={{ padding: '12px 14px', color: 'var(--muted, #64748b)' }}>
-                          {t.type === 'newsletter' ? 'Widget Opt-In' : 'Support Ticket'}
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 3: EMAIL TEMPLATES */}
+        {/* TAB 2: EMAIL TEMPLATES */}
         {activeTab === 'templates' && (
           <div style={{ flex: 1, display: 'flex', padding: 20, gap: 20 }}>
             {/* Template Selector list */}
@@ -909,271 +767,405 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
           </div>
         )}
 
-        {/* TAB 3: NEWSLETTER BROADCAST */}
+        {/* TAB 3: AUDIENCE & NEWSLETTERS */}
         {activeTab === 'newsletter' && (
-          <div style={{ flex: 1, padding: 24, maxWidth: 680, margin: '0 auto', width: '100%', overflowY: 'auto' }}>
-            <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 6px 0', color: 'var(--foreground, #0f172a)' }}>
-              Dispatch Newsletter Broadcast
-            </h3>
-            <p style={{ fontSize: 13, color: 'var(--muted, #64748b)', margin: '0 0 16px 0' }}>
-              Compose and send product announcements, release digests, or newsletters to your subscriber list.
-            </p>
-
-            {/* Target Audience Summary Box */}
+          <div style={{ flex: 1, padding: 24, maxWidth: 780, margin: '0 auto', width: '100%', overflowY: 'auto' }}>
+            {/* Sub-Nav Pill Bar */}
             <div
               style={{
-                padding: 14,
+                display: 'inline-flex',
+                gap: 4,
+                backgroundColor: 'var(--muted-bg, #f1f5f9)',
+                padding: 4,
                 borderRadius: 8,
-                backgroundColor: 'var(--muted-bg, #f8fafc)',
-                border: '1px solid var(--card-border, #e2e8f0)',
-                marginBottom: 20,
+                marginBottom: 24,
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground, #0f172a)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Mail size={15} style={{ color: 'var(--accent, #3b82f6)' }} />
-                  <span>Target Audience:</span>
-                  <span style={{ color: '#10b981', fontWeight: 700 }}>
-                    {tickets.filter((t) => t.userEmail).length} Opted-in Subscribers
-                  </span>
-                </div>
-              </div>
-
-              <div style={{ fontSize: 12, color: 'var(--muted, #64748b)', marginBottom: 8 }}>
-                Recipients include users who opted into product updates via the Engage widget or support tickets.
-              </div>
-
-              {/* Subscriber List Preview Pills */}
-              {(() => {
-                const subscriberEmails = Array.from(
-                  new Set(tickets.filter((t) => t.userEmail).map((t) => t.userEmail as string))
-                );
-                const MAX_PREVIEW = 6;
-                const remaining = subscriberEmails.length - MAX_PREVIEW;
-
-                return (
-                  <div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
-                      {subscriberEmails.slice(0, MAX_PREVIEW).map((email, idx) => (
-                        <span
-                          key={`${email}-${idx}`}
-                          style={{
-                            fontSize: 11,
-                            padding: '3px 8px',
-                            borderRadius: 12,
-                            backgroundColor: 'var(--card-bg, #ffffff)',
-                            border: '1px solid var(--card-border, #cbd5e1)',
-                            color: 'var(--foreground, #0f172a)',
-                          }}
-                        >
-                          {email}
-                        </span>
-                      ))}
-
-                      {remaining > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const el = document.getElementById('engage-subscribers-table');
-                            if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
-                          }}
-                          style={{
-                            fontSize: 11,
-                            fontWeight: 600,
-                            padding: '3px 10px',
-                            borderRadius: 12,
-                            backgroundColor: 'var(--accent, #3b82f6)',
-                            color: '#ffffff',
-                            border: 'none',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          +{remaining} more (View All)
-                        </button>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const csvContent = 'data:text/csv;charset=utf-8,' + ['Email,SubscribedAt'].concat(subscriberEmails.map((e) => `${e},${new Date().toISOString()}`)).join('\n');
-                          const encodedUri = encodeURI(csvContent);
-                          const link = document.createElement('a');
-                          link.setAttribute('href', encodedUri);
-                          link.setAttribute('download', 'subscribers.csv');
-                          document.body.appendChild(link);
-                          link.click();
-                          document.body.removeChild(link);
-                        }}
-                        style={{
-                          marginLeft: 'auto',
-                          fontSize: 11,
-                          fontWeight: 600,
-                          padding: '3px 10px',
-                          borderRadius: 6,
-                          backgroundColor: 'var(--card-bg, #ffffff)',
-                          border: '1px solid var(--card-border, #cbd5e1)',
-                          color: 'var(--foreground, #0f172a)',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        📥 Export CSV
-                      </button>
-                    </div>
-
-                    {/* Expandable Subscribers Table for inspecting full audience */}
-                    <div
-                      id="engage-subscribers-table"
-                      style={{
-                        display: 'none',
-                        marginTop: 12,
-                        padding: 10,
-                        borderRadius: 6,
-                        backgroundColor: 'var(--card-bg, #ffffff)',
-                        border: '1px solid var(--card-border, #cbd5e1)',
-                        maxHeight: 180,
-                        overflowY: 'auto',
-                      }}
-                    >
-                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-                        <thead>
-                          <tr style={{ borderBottom: '1px solid var(--card-border, #e2e8f0)', textAlign: 'left', color: 'var(--muted, #64748b)' }}>
-                            <th style={{ padding: '6px 8px' }}>Subscriber Email</th>
-                            <th style={{ padding: '6px 8px' }}>Status</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {subscriberEmails.map((email, idx) => (
-                            <tr key={`table-${email}-${idx}`} style={{ borderBottom: '1px solid var(--card-border, #f1f5f9)' }}>
-                              <td style={{ padding: '6px 8px', color: 'var(--foreground, #0f172a)' }}>{email}</td>
-                              <td style={{ padding: '6px 8px', color: '#10b981', fontWeight: 600 }}>Active</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-
-            {broadcastStatus && (
-              <div style={{ padding: 10, borderRadius: 6, background: 'rgba(16,185,129,0.15)', color: '#059669', fontSize: 13, marginBottom: 16 }}>
-                {broadcastStatus}
-              </div>
-            )}
-
-            <form onSubmit={handleSendBroadcast} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground, #0f172a)', display: 'block', marginBottom: 6 }}>
-                  Email Subject
-                </label>
-                <input
-                  type="text"
-                  value={broadcastSubject}
-                  onChange={(e) => setBroadcastSubject(e.target.value)}
-                  placeholder="e.g. 🚀 What's new in Trading Diary v0.2.0"
-                  style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    backgroundColor: 'var(--card-bg, #ffffff)',
-                    border: '1px solid var(--card-border, #cbd5e1)',
-                    borderRadius: 8,
-                    color: 'var(--foreground, #0f172a)',
-                    fontSize: 14,
-                  }}
-                  required
-                />
-              </div>
-
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground, #0f172a)', display: 'block', marginBottom: 6 }}>
-                  Message Content / Release Notes
-                </label>
-                <textarea
-                  value={broadcastBody}
-                  onChange={(e) => setBroadcastBody(e.target.value)}
-                  placeholder="Write update notes or newsletter summary..."
-                  style={{
-                    width: '100%',
-                    height: 180,
-                    backgroundColor: 'var(--card-bg, #ffffff)',
-                    border: '1px solid var(--card-border, #cbd5e1)',
-                    borderRadius: 8,
-                    padding: 14,
-                    color: 'var(--foreground, #0f172a)',
-                    fontSize: 14,
-                    lineHeight: 1.5,
-                    resize: 'none',
-                  }}
-                  required
-                />
-              </div>
-
               <button
-                type="submit"
-                disabled={isSendingBroadcast}
+                type="button"
+                onClick={() => setAudienceSubTab('broadcast')}
                 style={{
-                  padding: '12px 24px',
-                  borderRadius: 8,
-                  backgroundColor: '#10b981',
-                  color: '#ffffff',
+                  padding: '7px 16px',
+                  borderRadius: 6,
                   border: 'none',
-                  fontWeight: 700,
-                  fontSize: 14,
+                  fontSize: 13,
+                  fontWeight: 600,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
+                  gap: 6,
+                  backgroundColor: audienceSubTab === 'broadcast' ? 'var(--card-bg, #ffffff)' : 'transparent',
+                  color: audienceSubTab === 'broadcast' ? 'var(--accent, #3b82f6)' : 'var(--muted, #64748b)',
+                  boxShadow: audienceSubTab === 'broadcast' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
                 }}
               >
-                <Send size={16} />
-                <span>{isSendingBroadcast ? 'Dispatching Broadcast...' : 'Dispatch Broadcast via Brevo'}</span>
+                <Mail size={14} />
+                <span>Dispatch Broadcast</span>
               </button>
-            </form>
 
-            {/* Sent Broadcasts History Section */}
-            <div style={{ marginTop: 32, borderTop: '1px solid var(--card-border, #e2e8f0)', paddingTop: 20 }}>
-              <h4 style={{ fontSize: 15, fontWeight: 700, margin: '0 0 10px 0', color: 'var(--foreground, #0f172a)' }}>
-                📜 Sent Broadcasts History
-              </h4>
-              <p style={{ fontSize: 12, color: 'var(--muted, #64748b)', margin: '0 0 14px 0' }}>
-                Review past newsletters and product update announcements dispatched to your subscribers.
-              </p>
-
-              <div
+              <button
+                type="button"
+                onClick={() => setAudienceSubTab('subscribers')}
                 style={{
-                  backgroundColor: 'var(--card-bg, #ffffff)',
-                  border: '1px solid var(--card-border, #cbd5e1)',
-                  borderRadius: 8,
-                  overflow: 'hidden',
+                  padding: '7px 16px',
+                  borderRadius: 6,
+                  border: 'none',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  backgroundColor: audienceSubTab === 'subscribers' ? 'var(--card-bg, #ffffff)' : 'transparent',
+                  color: audienceSubTab === 'subscribers' ? 'var(--accent, #3b82f6)' : 'var(--muted, #64748b)',
+                  boxShadow: audienceSubTab === 'subscribers' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
                 }}
               >
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left' }}>
-                  <thead>
-                    <tr style={{ backgroundColor: 'var(--muted-bg, #f8fafc)', borderBottom: '1px solid var(--card-border, #e2e8f0)', color: 'var(--muted, #64748b)' }}>
-                      <th style={{ padding: '10px 14px' }}>Subject</th>
-                      <th style={{ padding: '10px 14px' }}>Recipients</th>
-                      <th style={{ padding: '10px 14px' }}>Date Sent</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {/* Render recent broadcast or memory broadcast */}
-                    <tr style={{ borderBottom: '1px solid var(--card-border, #f1f5f9)' }}>
-                      <td style={{ padding: '12px 14px', fontWeight: 600, color: 'var(--foreground, #0f172a)' }}>
-                        {broadcastSubject || 'New Product Updates'}
-                      </td>
-                      <td style={{ padding: '12px 14px', color: '#10b981', fontWeight: 600 }}>
-                        {tickets.filter((t) => t.userEmail).length} Recipients
-                      </td>
-                      <td style={{ padding: '12px 14px', color: 'var(--muted, #64748b)' }}>
-                        {new Date().toLocaleDateString()} {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+                <Users size={14} />
+                <span>Subscribers List ({tickets.filter((t) => t.userEmail).length})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setAudienceSubTab('history')}
+                style={{
+                  padding: '7px 16px',
+                  borderRadius: 6,
+                  border: 'none',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  backgroundColor: audienceSubTab === 'history' ? 'var(--card-bg, #ffffff)' : 'transparent',
+                  color: audienceSubTab === 'history' ? 'var(--accent, #3b82f6)' : 'var(--muted, #64748b)',
+                  boxShadow: audienceSubTab === 'history' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                }}
+              >
+                <FileText size={14} />
+                <span>Sent History</span>
+              </button>
             </div>
+
+            {/* SUB-VIEW 1: DISPATCH BROADCAST */}
+            {audienceSubTab === 'broadcast' && (
+              <div>
+                <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 6px 0', color: 'var(--foreground, #0f172a)' }}>
+                  Dispatch Newsletter Broadcast
+                </h3>
+                <p style={{ fontSize: 13, color: 'var(--muted, #64748b)', margin: '0 0 16px 0' }}>
+                  Compose and send product announcements, release digests, or newsletters to your subscriber list.
+                </p>
+
+                {/* Target Audience Summary Box */}
+                <div
+                  style={{
+                    padding: 14,
+                    borderRadius: 8,
+                    backgroundColor: 'var(--muted-bg, #f8fafc)',
+                    border: '1px solid var(--card-border, #e2e8f0)',
+                    marginBottom: 20,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground, #0f172a)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Mail size={15} style={{ color: 'var(--accent, #3b82f6)' }} />
+                      <span>Target Audience:</span>
+                      <span style={{ color: '#10b981', fontWeight: 700 }}>
+                        {tickets.filter((t) => t.userEmail).length} Opted-in Subscribers
+                      </span>
+                    </div>
+                  </div>
+
+                  <div style={{ fontSize: 12, color: 'var(--muted, #64748b)', marginBottom: 8 }}>
+                    Recipients include users who opted into product updates via the Engage widget or support tickets.
+                  </div>
+
+                  {/* Subscriber List Preview Pills */}
+                  {(() => {
+                    const subscriberEmails = Array.from(
+                      new Set(tickets.filter((t) => t.userEmail).map((t) => t.userEmail as string))
+                    );
+                    const MAX_PREVIEW = 6;
+                    const remaining = subscriberEmails.length - MAX_PREVIEW;
+
+                    return (
+                      <div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+                          {subscriberEmails.slice(0, MAX_PREVIEW).map((email, idx) => (
+                            <span
+                              key={`${email}-${idx}`}
+                              style={{
+                                fontSize: 11,
+                                padding: '3px 8px',
+                                borderRadius: 12,
+                                backgroundColor: 'var(--card-bg, #ffffff)',
+                                border: '1px solid var(--card-border, #cbd5e1)',
+                                color: 'var(--foreground, #0f172a)',
+                              }}
+                            >
+                              {email}
+                            </span>
+                          ))}
+
+                          {remaining > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setAudienceSubTab('subscribers')}
+                              style={{
+                                fontSize: 11,
+                                fontWeight: 600,
+                                padding: '3px 10px',
+                                borderRadius: 12,
+                                backgroundColor: 'var(--accent, #3b82f6)',
+                                color: '#ffffff',
+                                border: 'none',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              +{remaining} more (View All)
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {broadcastStatus && (
+                  <div style={{ padding: 10, borderRadius: 6, background: 'rgba(16,185,129,0.15)', color: '#059669', fontSize: 13, marginBottom: 16 }}>
+                    {broadcastStatus}
+                  </div>
+                )}
+
+                <form onSubmit={handleSendBroadcast} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground, #0f172a)', display: 'block', marginBottom: 6 }}>
+                      Email Subject
+                    </label>
+                    <input
+                      type="text"
+                      value={broadcastSubject}
+                      onChange={(e) => setBroadcastSubject(e.target.value)}
+                      placeholder="e.g. 🚀 What's new in Trading Diary v0.2.0"
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        backgroundColor: 'var(--card-bg, #ffffff)',
+                        border: '1px solid var(--card-border, #cbd5e1)',
+                        borderRadius: 8,
+                        color: 'var(--foreground, #0f172a)',
+                        fontSize: 14,
+                      }}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground, #0f172a)', display: 'block', marginBottom: 6 }}>
+                      Message Content / Release Notes
+                    </label>
+                    <textarea
+                      value={broadcastBody}
+                      onChange={(e) => setBroadcastBody(e.target.value)}
+                      placeholder="Write update notes or newsletter summary..."
+                      style={{
+                        width: '100%',
+                        height: 180,
+                        backgroundColor: 'var(--card-bg, #ffffff)',
+                        border: '1px solid var(--card-border, #cbd5e1)',
+                        borderRadius: 8,
+                        padding: 14,
+                        color: 'var(--foreground, #0f172a)',
+                        fontSize: 14,
+                        lineHeight: 1.5,
+                        resize: 'none',
+                      }}
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isSendingBroadcast}
+                    style={{
+                      padding: '12px 24px',
+                      borderRadius: 8,
+                      backgroundColor: '#10b981',
+                      color: '#ffffff',
+                      border: 'none',
+                      fontWeight: 700,
+                      fontSize: 14,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                    }}
+                  >
+                    <Send size={16} />
+                    <span>{isSendingBroadcast ? 'Dispatching Broadcast...' : 'Dispatch Broadcast via Brevo'}</span>
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {/* SUB-VIEW 2: SUBSCRIBERS DIRECTORY */}
+            {audienceSubTab === 'subscribers' && (
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                  <div>
+                    <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 4px 0', color: 'var(--foreground, #0f172a)' }}>
+                      Opted-in Subscribers Directory
+                    </h3>
+                    <p style={{ fontSize: 13, color: 'var(--muted, #64748b)', margin: 0 }}>
+                      View, search, and export users who opted into product announcements and newsletters.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const subList = Array.from(new Set(tickets.filter((t) => t.userEmail).map((t) => t.userEmail as string)));
+                      const csvContent = 'data:text/csv;charset=utf-8,' + ['Email,SubscribedAt,Status'].concat(subList.map((e) => `${e},${new Date().toISOString()},Active`)).join('\n');
+                      const encodedUri = encodeURI(csvContent);
+                      const link = document.createElement('a');
+                      link.setAttribute('href', encodedUri);
+                      link.setAttribute('download', 'subscribers.csv');
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: 6,
+                      backgroundColor: 'var(--accent, #3b82f6)',
+                      color: '#ffffff',
+                      border: 'none',
+                      fontWeight: 600,
+                      fontSize: 13,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                    }}
+                  >
+                    <Download size={15} />
+                    <span>Export Subscribers CSV</span>
+                  </button>
+                </div>
+
+                {/* Search Input Bar */}
+                <div style={{ position: 'relative', marginBottom: 16, maxWidth: 400 }}>
+                  <Search size={15} style={{ position: 'absolute', left: 12, top: 11, color: 'var(--muted, #94a3b8)' }} />
+                  <input
+                    type="text"
+                    value={subscriberSearch}
+                    onChange={(e) => setSubscriberSearch(e.target.value)}
+                    placeholder="Search subscriber by email or name..."
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px 8px 36px',
+                      borderRadius: 6,
+                      border: '1px solid var(--card-border, #cbd5e1)',
+                      backgroundColor: 'var(--card-bg, #ffffff)',
+                      color: 'var(--foreground, #0f172a)',
+                      fontSize: 13,
+                    }}
+                  />
+                </div>
+
+                {/* Subscribers Table */}
+                <div
+                  style={{
+                    backgroundColor: 'var(--card-bg, #ffffff)',
+                    border: '1px solid var(--card-border, #cbd5e1)',
+                    borderRadius: 8,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ backgroundColor: 'var(--muted-bg, #f8fafc)', borderBottom: '1px solid var(--card-border, #e2e8f0)', color: 'var(--muted, #64748b)' }}>
+                        <th style={{ padding: '10px 14px' }}>Subscriber Email</th>
+                        <th style={{ padding: '10px 14px' }}>User Name</th>
+                        <th style={{ padding: '10px 14px' }}>Status</th>
+                        <th style={{ padding: '10px 14px' }}>Source / App</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tickets
+                        .filter((t) => t.userEmail && (
+                          !subscriberSearch ||
+                          t.userEmail.toLowerCase().includes(subscriberSearch.toLowerCase()) ||
+                          (t.userName && t.userName.toLowerCase().includes(subscriberSearch.toLowerCase()))
+                        ))
+                        .map((t, idx) => (
+                          <tr key={`sub-tab-${t.id}-${idx}`} style={{ borderBottom: '1px solid var(--card-border, #f1f5f9)' }}>
+                            <td style={{ padding: '12px 14px', fontWeight: 600, color: 'var(--foreground, #0f172a)' }}>
+                              {t.userEmail}
+                            </td>
+                            <td style={{ padding: '12px 14px', color: 'var(--muted, #64748b)' }}>
+                              {t.userName || 'N/A'}
+                            </td>
+                            <td style={{ padding: '12px 14px', color: '#10b981', fontWeight: 600 }}>
+                              Active
+                            </td>
+                            <td style={{ padding: '12px 14px', color: 'var(--muted, #64748b)' }}>
+                              {t.type === 'newsletter' ? 'Widget Opt-In' : 'Support Ticket'}
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* SUB-VIEW 3: SENT HISTORY */}
+            {audienceSubTab === 'history' && (
+              <div>
+                <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 6px 0', color: 'var(--foreground, #0f172a)' }}>
+                  📜 Sent Broadcasts History
+                </h3>
+                <p style={{ fontSize: 13, color: 'var(--muted, #64748b)', margin: '0 0 16px 0' }}>
+                  Review past newsletters and product update announcements dispatched to your subscribers.
+                </p>
+
+                <div
+                  style={{
+                    backgroundColor: 'var(--card-bg, #ffffff)',
+                    border: '1px solid var(--card-border, #cbd5e1)',
+                    borderRadius: 8,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ backgroundColor: 'var(--muted-bg, #f8fafc)', borderBottom: '1px solid var(--card-border, #e2e8f0)', color: 'var(--muted, #64748b)' }}>
+                        <th style={{ padding: '10px 14px' }}>Subject</th>
+                        <th style={{ padding: '10px 14px' }}>Recipients</th>
+                        <th style={{ padding: '10px 14px' }}>Date Sent</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr style={{ borderBottom: '1px solid var(--card-border, #f1f5f9)' }}>
+                        <td style={{ padding: '12px 14px', fontWeight: 600, color: 'var(--foreground, #0f172a)' }}>
+                          {broadcastSubject || 'New Product Updates'}
+                        </td>
+                        <td style={{ padding: '12px 14px', color: '#10b981', fontWeight: 600 }}>
+                          {tickets.filter((t) => t.userEmail).length} Recipients
+                        </td>
+                        <td style={{ padding: '12px 14px', color: 'var(--muted, #64748b)' }}>
+                          {new Date().toLocaleDateString()} {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
