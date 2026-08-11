@@ -1,54 +1,41 @@
-# @reactkits.dev/react-feedbox
+# @reactkits.dev/react-engage
 
-A lightweight, reskinnable, embeddable React component package for feedback, bug reporting with auto-telemetry, feature suggestions, FAQs, and support ticketing.
+A lightweight, reskinnable, embeddable React component package for user engagement: feedback widgets, bug reporting with auto-telemetry, feature suggestions, announcements, FAQs, and support ticketing.
 
 ## Installation
 
 ```bash
-npm install @reactkits.dev/react-feedbox lucide-react
+npm install @reactkits.dev/react-engage lucide-react
 ```
 
 ## Quick Start
 
-Import the component and its stylesheet near your application root:
+Import the widget and styles near your application root:
 
 ```tsx
-import { FeedbackWidget } from '@reactkits.dev/react-feedbox';
-import '@reactkits.dev/react-feedbox/styles.css';
+import { EngageWidget } from '@reactkits.dev/react-engage';
+import '@reactkits.dev/react-engage/styles.css';
 
 export default function App() {
   return (
-    <div>
-      {/* Your Application Content */}
-
-      <FeedbackWidget
-        appId="my-awesome-app"
-        position="bottom-right" // "bottom-right" | "bottom-left" | "top-right" | "top-left"
-        theme="inherit"        // "inherit" | "system" | "light" | "dark"
-        user={{
-          id: "user_123",
-          name: "Trader Jane",
-          email: "jane@example.com",
-        }}
-        onSubmitBug={async (payload) => {
-          console.log('Bug Report:', payload);
-          // Send to your backend, Webhook, GitHub Issue, or Supabase
-        }}
-        onSubmitSuggestion={async (payload) => {
-          console.log('Suggestion:', payload);
-        }}
-        onSubmitTicket={async (payload) => {
-          console.log('Support Ticket:', payload);
-        }}
-      />
-    </div>
+    <EngageWidget
+      appId="my-app"
+      position="bottom-right"
+      theme="inherit"
+      endpointUrl="/api/engage"
+    />
   );
 }
 ```
 
+## Core Exports
+
+- `EngageWidget`: Embedded floating engagement widget.
+- `EngageAdminPanel`: In-app admin view for managing broadcasts, feedback, and support tickets.
+- `@reactkits.dev/react-engage/server`: Server route handlers (`createFetchHandler`, `createExpressHandler`).
+
 ## Features
 
-- **4-in-1 Support Hub**: FAQs/Help, Bug Reports, Suggestion Box, and Support Tickets.
-- **Telemetry Capture**: Automatically attaches current route, browser, OS, viewport size, screen resolution, and timestamp to bug reports.
-- **Theme Support**: Seamlessly adopts light and dark modes via semantic CSS tokens (`inherit` mode maps to host application CSS variables).
-- **Custom Reskinnable**: Configure trigger placement, labels, accent colors, and custom button triggers.
+- **Multi-channel**: Announcements/Broadcasts, Feedback/Suggestions, Bug Reports with auto-telemetry, and Support Tickets.
+- **Theme Support**: Supports `inherit`, `system`, `light`, and `dark` modes with semantic tokens.
+- **Server Handlers**: Plug-and-play route handlers for Next.js, Express, and Fetch API backends.
