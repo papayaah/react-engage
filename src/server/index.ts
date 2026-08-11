@@ -106,6 +106,27 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
     const { searchParams } = new URL(req.url);
     const action = searchParams.get('action');
 
+    if (action === 'list_subscribers') {
+      if (db && tables?.subscribers) {
+        try {
+          const dbSubscribers = await db.select().from(tables.subscribers);
+          return NextResponse.json({ subscribers: dbSubscribers });
+        } catch (e) {
+          console.error('[Engage API DB Subscribers Fetch Error]:', e);
+        }
+      }
+      const subTickets = globalTicketStore.filter((t) => t.type === 'newsletter' || t.userEmail);
+      return NextResponse.json({
+        subscribers: subTickets.map((t) => ({
+          id: t.id,
+          email: t.userEmail,
+          name: t.userName,
+          status: 'Active',
+          subscribedAt: t.createdAt,
+        })),
+      });
+    }
+
     if (action === 'list_broadcasts') {
       if (db && tables?.broadcasts) {
         try {

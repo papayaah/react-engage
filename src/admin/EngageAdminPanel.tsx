@@ -120,7 +120,9 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
   const [isSendingBroadcast, setIsSendingBroadcast] = useState(false);
   const [broadcastStatus, setBroadcastStatus] = useState<string | null>(null);
 
-  // Load tickets from API if available
+  const [subscribers, setSubscribers] = useState<any[]>([]);
+
+  // Load tickets and subscribers from API if available
   const fetchTickets = async () => {
     setIsLoading(true);
     try {
@@ -132,6 +134,15 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
           if (data.tickets.length > 0 && !selectedTicket) {
             setSelectedTicket(data.tickets[0]);
           }
+        }
+      }
+
+      // Fetch dedicated subscribers list
+      const subRes = await fetch(`${apiEndpoint}?action=list_subscribers`);
+      if (subRes.ok) {
+        const subData = await subRes.json();
+        if (Array.isArray(subData.subscribers)) {
+          setSubscribers(subData.subscribers);
         }
       }
     } catch (e) {
@@ -1095,28 +1106,47 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                       </tr>
                     </thead>
                     <tbody>
-                      {tickets
-                        .filter((t) => t.userEmail && (
-                          !subscriberSearch ||
-                          t.userEmail.toLowerCase().includes(subscriberSearch.toLowerCase()) ||
-                          (t.userName && t.userName.toLowerCase().includes(subscriberSearch.toLowerCase()))
-                        ))
-                        .map((t, idx) => (
-                          <tr key={`sub-tab-${t.id}-${idx}`} style={{ borderBottom: '1px solid var(--card-border, #f1f5f9)' }}>
-                            <td style={{ padding: '12px 14px', fontWeight: 600, color: 'var(--foreground, #0f172a)' }}>
-                              {t.userEmail}
-                            </td>
-                            <td style={{ padding: '12px 14px', color: 'var(--muted, #64748b)' }}>
-                              {t.userName || 'N/A'}
-                            </td>
-                            <td style={{ padding: '12px 14px', color: '#10b981', fontWeight: 600 }}>
-                              Active
-                            </td>
-                            <td style={{ padding: '12px 14px', color: 'var(--muted, #64748b)' }}>
-                              {t.type === 'newsletter' ? 'Widget Opt-In' : 'Support Ticket'}
-                            </td>
-                          </tr>
-                        ))}
+                      {(() => {
+                        const displayList = subscribers.length > 0
+                          ? subscribers
+                          : tickets
+                              .filter((t) => t.userEmail)
+                              .map((t) => ({ id: t.id, email: t.userEmail, name: t.userName, status: 'Active', frequency: 'all' }));
+
+                        return displayList
+                          .filter((sub) => sub.email && (
+                            !subscriberSearch ||
+                            sub.email.toLowerCase().includes(subscriberSearch.toLowerCase()) ||
+                            (sub.name && sub.name.toLowerCase().includes(subscriberSearch.toLowerCase()))
+                          ))
+                          .map((sub, idx) => (
+                            <tr key={`sub-tab-${sub.id || idx}-${idx}`} style={{ borderBottom: '1px solid var(--card-border, #f1f5f9)' }}>
+                              <td style={{ padding: '12px 14px', fontWeight: 600, color: 'var(--foreground, #0f172a)' }}>
+                                {sub.email}
+                              </td>
+                              <td style={{ padding: '12px 14px', color: 'var(--muted, #64748b)' }}>
+                                {sub.name || 'N/A'}
+                              </td>
+                              <td style={{ padding: '12px 14px' }}>
+                                <span
+                                  style={{
+                                    fontSize: 11,
+                                    padding: '2px 8px',
+                                    borderRadius: 10,
+                                    backgroundColor: sub.status === 'Unsubscribed' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                                    color: sub.status === 'Unsubscribed' ? '#dc2626' : '#059669',
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  {sub.status || 'Active'}
+                                </span>
+                              </td>
+                              <td style={{ padding: '12px 14px', color: 'var(--muted, #64748b)', fontSize: 12 }}>
+                                {sub.frequency ? `${sub.frequency.toUpperCase()} Updates` : 'All Updates'}
+                              </td>
+                            </tr>
+                          ));
+                      })()}
                     </tbody>
                   </table>
                 </div>
