@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Inbox, Mail, FileText, Send, User, RefreshCw, Filter, Eye } from 'lucide-react';
+import { Inbox, Mail, FileText, Send, User, RefreshCw, Filter, Eye, Users, Download, Search } from 'lucide-react';
 
 export interface TicketItem {
   id: string;
@@ -96,7 +96,8 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
   onSaveTemplate,
   onSendBroadcast,
 }) => {
-  const [activeTab, setActiveTab] = useState<'inbox' | 'templates' | 'newsletter'>(defaultTab);
+  const [activeTab, setActiveTab] = useState<'inbox' | 'subscribers' | 'templates' | 'newsletter'>(defaultTab);
+  const [subscriberSearch, setSubscriberSearch] = useState('');
   const [tickets, setTickets] = useState<TicketItem[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<TicketItem | null>(null);
   const [filterType, setFilterType] = useState<string>('all');
@@ -313,6 +314,37 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                 {tickets.length}
               </span>
             )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('subscribers')}
+            style={{
+              padding: '6px 14px',
+              borderRadius: 6,
+              border: 'none',
+              fontSize: 13,
+              fontWeight: 500,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              backgroundColor: activeTab === 'subscribers' ? 'var(--accent, #3b82f6)' : 'transparent',
+              color: activeTab === 'subscribers' ? '#ffffff' : 'var(--muted, #64748b)',
+            }}
+          >
+            <Users size={14} />
+            <span>Subscribers</span>
+            <span
+              style={{
+                fontSize: 10,
+                padding: '1px 5px',
+                borderRadius: 10,
+                backgroundColor: activeTab === 'subscribers' ? 'rgba(255,255,255,0.25)' : 'var(--muted-bg, #f1f5f9)',
+                color: activeTab === 'subscribers' ? '#ffffff' : 'var(--foreground, #0f172a)',
+              }}
+            >
+              {tickets.filter((t) => t.userEmail).length}
+            </span>
           </button>
 
           <button
@@ -637,7 +669,119 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
           </>
         )}
 
-        {/* TAB 2: EMAIL TEMPLATES */}
+        {/* TAB 2: SUBSCRIBERS DIRECTORY */}
+        {activeTab === 'subscribers' && (
+          <div style={{ flex: 1, padding: 24, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <div>
+                <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 4px 0', color: 'var(--foreground, #0f172a)' }}>
+                  Opted-in Subscribers Directory
+                </h3>
+                <p style={{ fontSize: 13, color: 'var(--muted, #64748b)', margin: 0 }}>
+                  View, search, and export users who opted into product announcements and newsletters.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const subList = Array.from(new Set(tickets.filter((t) => t.userEmail).map((t) => t.userEmail as string)));
+                  const csvContent = 'data:text/csv;charset=utf-8,' + ['Email,SubscribedAt,Status'].concat(subList.map((e) => `${e},${new Date().toISOString()},Active`)).join('\n');
+                  const encodedUri = encodeURI(csvContent);
+                  const link = document.createElement('a');
+                  link.setAttribute('href', encodedUri);
+                  link.setAttribute('download', 'subscribers.csv');
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: 6,
+                  backgroundColor: 'var(--accent, #3b82f6)',
+                  color: '#ffffff',
+                  border: 'none',
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                <Download size={15} />
+                <span>Export Subscribers CSV</span>
+              </button>
+            </div>
+
+            {/* Search Input Bar */}
+            <div style={{ position: 'relative', marginBottom: 16, maxWidth: 400 }}>
+              <Search size={15} style={{ position: 'absolute', left: 12, top: 11, color: 'var(--muted, #94a3b8)' }} />
+              <input
+                type="text"
+                value={subscriberSearch}
+                onChange={(e) => setSubscriberSearch(e.target.value)}
+                placeholder="Search subscriber by email or name..."
+                style={{
+                  width: '100%',
+                  padding: '8px 12px 8px 36px',
+                  borderRadius: 6,
+                  border: '1px solid var(--card-border, #cbd5e1)',
+                  backgroundColor: 'var(--card-bg, #ffffff)',
+                  color: 'var(--foreground, #0f172a)',
+                  fontSize: 13,
+                }}
+              />
+            </div>
+
+            {/* Subscribers Table */}
+            <div
+              style={{
+                backgroundColor: 'var(--card-bg, #ffffff)',
+                border: '1px solid var(--card-border, #cbd5e1)',
+                borderRadius: 8,
+                overflow: 'hidden',
+              }}
+            >
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ backgroundColor: 'var(--muted-bg, #f8fafc)', borderBottom: '1px solid var(--card-border, #e2e8f0)', color: 'var(--muted, #64748b)' }}>
+                    <th style={{ padding: '10px 14px' }}>Subscriber Email</th>
+                    <th style={{ padding: '10px 14px' }}>User Name</th>
+                    <th style={{ padding: '10px 14px' }}>Status</th>
+                    <th style={{ padding: '10px 14px' }}>Source / App</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tickets
+                    .filter((t) => t.userEmail && (
+                      !subscriberSearch ||
+                      t.userEmail.toLowerCase().includes(subscriberSearch.toLowerCase()) ||
+                      (t.userName && t.userName.toLowerCase().includes(subscriberSearch.toLowerCase()))
+                    ))
+                    .map((t, idx) => (
+                      <tr key={`sub-tab-${t.id}-${idx}`} style={{ borderBottom: '1px solid var(--card-border, #f1f5f9)' }}>
+                        <td style={{ padding: '12px 14px', fontWeight: 600, color: 'var(--foreground, #0f172a)' }}>
+                          {t.userEmail}
+                        </td>
+                        <td style={{ padding: '12px 14px', color: 'var(--muted, #64748b)' }}>
+                          {t.userName || 'N/A'}
+                        </td>
+                        <td style={{ padding: '12px 14px', color: '#10b981', fontWeight: 600 }}>
+                          Active
+                        </td>
+                        <td style={{ padding: '12px 14px', color: 'var(--muted, #64748b)' }}>
+                          {t.type === 'newsletter' ? 'Widget Opt-In' : 'Support Ticket'}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: EMAIL TEMPLATES */}
         {activeTab === 'templates' && (
           <div style={{ flex: 1, display: 'flex', padding: 20, gap: 20 }}>
             {/* Template Selector list */}
