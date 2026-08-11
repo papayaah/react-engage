@@ -24,9 +24,15 @@ export interface EngageServerConfig {
   adminEmail?: string;
   senderEmail?: string;
   senderName?: string;
+  db?: any;
+  tables?: {
+    tickets?: any;
+    subscribers?: any;
+    templates?: any;
+  };
 }
 
-// Memory store fallback for incoming ticket submissions
+// Memory store fallback for standalone app without DB
 const globalTicketStore: StoredTicket[] = [
   {
     id: 'tkt_001',
@@ -60,6 +66,9 @@ const globalTicketStore: StoredTicket[] = [
 ];
 
 export function createEngageRouteHandler(config?: EngageServerConfig) {
+  const db = config?.db;
+  const tables = config?.tables;
+
   const getApiKey = () => config?.apiKey || process.env.ENGAGE_API_KEY || process.env.BREVO_API_KEY;
   const getAdminEmail = () =>
     config?.adminEmail ||
@@ -86,6 +95,14 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
     const action = searchParams.get('action');
 
     if (action === 'list_tickets') {
+      if (db && tables?.tickets) {
+        try {
+          const dbTickets = await db.select().from(tables.tickets);
+          return NextResponse.json({ tickets: dbTickets.length > 0 ? dbTickets : globalTicketStore });
+        } catch (e) {
+          console.error('[Engage API DB Fetch Error]:', e);
+        }
+      }
       return NextResponse.json({ tickets: globalTicketStore });
     }
 
@@ -108,6 +125,17 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
         const { ticketId, userEmail, replyText } = body;
         console.log(`[Engage API] Sending support reply to ${userEmail} for ticket ${ticketId}`);
 
+        // Update status in PostgreSQL if DB is connected
+        if (db && tables?.tickets) {
+          try {
+            const { eq } = await import('drizzle-orm');
+            await db.update(tables.tickets).set({ status: 'resolved' }).where(eq(tables.tickets.id, ticketId));
+          } catch (e) {
+            console.error('[Engage API DB Update Error]:', e);
+          }
+        }
+
+        // Update in-memory fallback
         const t = globalTicketStore.find((item) => item.id === ticketId);
         if (t) {
           t.status = 'resolved';
@@ -145,9 +173,20 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
         const { subject, body: broadcastBody } = body;
         console.log(`[Engage API] Dispatching newsletter broadcast: ${subject}`);
 
-        const subscribers = globalTicketStore
-          .filter((t) => t.userEmail)
-          .map((t) => ({ email: t.userEmail as string }));
+        let subscribers: Array<{ email: string }> = [];
+        if (db && tables?.subscribers) {
+          try {
+            subscribers = await db.select({ email: tables.subscribers.email }).from(tables.subscribers);
+          } catch (e) {
+            console.error('[Engage API DB Subscribers Fetch Error]:', e);
+          }
+        }
+
+        if (subscribers.length === 0) {
+          subscribers = globalTicketStore
+            .filter((t) => t.userEmail)
+            .map((t) => ({ email: t.userEmail as string }));
+        }
 
         if (apiKey && subscribers.length > 0) {
           await fetch('https://api.brevo.com/v3/smtp/email', {
@@ -181,21 +220,47 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
 
       const userEmail = payload?.email || payload?.user?.email || 'Anonymous';
       const userMessage = payload?.message || payload?.description || payload?.subject || 'Newsletter Subscription';
+      const ticketId = `tkt_${Date.now()}`;
 
-      const newTicket: StoredTicket = {
-        id: `tkt_${Date.now()}`,
+      const newTicketRecord = {
+        id: ticketId,
+        appId: payload?.appId || 'app',
         type: type || 'ticket',
         category: payload?.category ? String(payload.category).toUpperCase() : 'GENERAL',
-        severity: payload?.severity,
+        severity: payload?.severity || null,
         status: 'open',
         subject: payload?.subject || payload?.title || `${type} submission`,
         message: userMessage,
         userEmail,
-        userName: payload?.name || payload?.user?.name,
+        userName: payload?.name || payload?.user?.name || null,
+        environment: payload?.environment || null,
         createdAt: new Date().toISOString(),
-        environment: payload?.environment,
       };
-      globalTicketStore.unshift(newTicket);
+
+      // Persist in DB if connected
+      if (db) {
+        try {
+          if (type === 'newsletter' && tables?.subscribers && userEmail) {
+            await db.insert(tables.subscribers).values({
+              id: `sub_${Date.now()}`,
+              appId: payload?.appId || 'app',
+              email: userEmail,
+              name: payload?.name || null,
+              frequency: payload?.frequency || 'all',
+              subscribedAt: new Date().toISOString(),
+            }).onConflictDoNothing();
+          }
+
+          if (tables?.tickets) {
+            await db.insert(tables.tickets).values(newTicketRecord);
+          }
+        } catch (e) {
+          console.error('[Engage API DB Insert Error]:', e);
+        }
+      }
+
+      // Always save to memory store for instant local availability
+      globalTicketStore.unshift(newTicketRecord as StoredTicket);
 
       if (apiKey) {
         if (type === 'newsletter') {
@@ -221,11 +286,11 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
           });
         } else {
           // Send Admin notification email
-          const emailSubject = `[${newTicket.category}] New ${type} submission`;
+          const emailSubject = `[${newTicketRecord.category}] New ${type} submission`;
           const htmlBody = `
             <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
               <h2 style="color: #3b82f6; margin-top: 0;">New Support Submission</h2>
-              <p><strong>Type:</strong> ${type} (${newTicket.category})</p>
+              <p><strong>Type:</strong> ${type} (${newTicketRecord.category})</p>
               <p><strong>User Email:</strong> ${userEmail}</p>
               <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 16px 0;" />
               <h4 style="margin-bottom: 8px;">Message:</h4>
@@ -251,7 +316,7 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
         }
       }
 
-      return NextResponse.json({ success: true, ticketId: newTicket.id, receivedAt: new Date().toISOString() });
+      return NextResponse.json({ success: true, ticketId, receivedAt: new Date().toISOString() });
     } catch (error) {
       console.error('[Engage API Error]:', error);
       return NextResponse.json({ success: false, error: 'Failed to process submission' }, { status: 500 });
