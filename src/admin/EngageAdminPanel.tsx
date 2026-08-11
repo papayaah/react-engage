@@ -767,13 +767,59 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
 
         {/* TAB 3: NEWSLETTER BROADCAST */}
         {activeTab === 'newsletter' && (
-          <div style={{ flex: 1, padding: 24, maxWidth: 640, margin: '0 auto', width: '100%' }}>
+          <div style={{ flex: 1, padding: 24, maxWidth: 680, margin: '0 auto', width: '100%', overflowY: 'auto' }}>
             <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 6px 0', color: 'var(--foreground, #0f172a)' }}>
               Dispatch Newsletter Broadcast
             </h3>
-            <p style={{ fontSize: 13, color: 'var(--muted, #64748b)', margin: '0 0 20px 0' }}>
+            <p style={{ fontSize: 13, color: 'var(--muted, #64748b)', margin: '0 0 16px 0' }}>
               Compose and send product announcements, release digests, or newsletters to your subscriber list.
             </p>
+
+            {/* Target Audience Summary Box */}
+            <div
+              style={{
+                padding: 14,
+                borderRadius: 8,
+                backgroundColor: 'var(--muted-bg, #f8fafc)',
+                border: '1px solid var(--card-border, #e2e8f0)',
+                marginBottom: 20,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground, #0f172a)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Mail size={15} style={{ color: 'var(--accent, #3b82f6)' }} />
+                  <span>Target Audience:</span>
+                  <span style={{ color: '#10b981', fontWeight: 700 }}>
+                    {tickets.filter((t) => t.userEmail).length} Opted-in Subscribers
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ fontSize: 12, color: 'var(--muted, #64748b)', marginBottom: 8 }}>
+                Recipients include users who opted into product updates via the Engage widget or support tickets.
+              </div>
+
+              {/* Subscriber List Preview Pills */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, maxHeight: 80, overflowY: 'auto' }}>
+                {tickets
+                  .filter((t) => t.userEmail)
+                  .map((t, idx) => (
+                    <span
+                      key={`${t.userEmail}-${idx}`}
+                      style={{
+                        fontSize: 11,
+                        padding: '3px 8px',
+                        borderRadius: 12,
+                        backgroundColor: 'var(--card-bg, #ffffff)',
+                        border: '1px solid var(--card-border, #cbd5e1)',
+                        color: 'var(--foreground, #0f172a)',
+                      }}
+                    >
+                      {t.userEmail}
+                    </span>
+                  ))}
+              </div>
+            </div>
 
             {broadcastStatus && (
               <div style={{ padding: 10, borderRadius: 6, background: 'rgba(16,185,129,0.15)', color: '#059669', fontSize: 13, marginBottom: 16 }}>
