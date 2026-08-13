@@ -13,6 +13,10 @@ export const FeedbackWidget: React.FC<FeedbackWidgetProps> = (props) => {
     labels,
     accentColor,
     renderTrigger,
+    offsetBottom,
+    offsetLeft,
+    offsetRight,
+    mobileCollapse = true,
   } = props;
 
   const [isOpen, setIsOpen] = useState(false);
@@ -30,14 +34,18 @@ export const FeedbackWidget: React.FC<FeedbackWidgetProps> = (props) => {
 
   const toggle = () => setIsOpen((prev) => !prev);
 
-  const customStyle: React.CSSProperties = accentColor
-    ? ({ '--rfw-accent': accentColor } as React.CSSProperties)
-    : {};
+  const customStyle: React.CSSProperties = {
+    ...(accentColor ? ({ '--rfw-accent': accentColor } as React.CSSProperties) : {}),
+    ...(offsetBottom ? ({ '--rfw-offset-bottom': offsetBottom } as React.CSSProperties) : {}),
+    ...(offsetLeft ? ({ '--rfw-offset-left': offsetLeft } as React.CSSProperties) : {}),
+    ...(offsetRight ? ({ '--rfw-offset-right': offsetRight } as React.CSSProperties) : {}),
+  };
 
   return (
     <div
       className={`rfw-root rfw-container rfw-position-${position}`}
       data-theme={resolvedTheme}
+      data-mobile-collapse={mobileCollapse}
       style={customStyle}
     >
       {isOpen && <FeedbackDrawer {...props} themeMode={resolvedTheme} onClose={() => setIsOpen(false)} />}

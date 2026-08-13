@@ -134,6 +134,14 @@ export interface FeedbackWidgetProps {
   onSubmitNewsletter?: (payload: NewsletterPayload) => Promise<void> | void;
   /** Optional custom trigger render button */
   renderTrigger?: (props: { isOpen: boolean; toggle: () => void }) => React.ReactNode;
+  /** Custom bottom distance offset (e.g. "80px" to elevate above mobile bottom nav) */
+  offsetBottom?: string;
+  /** Custom left distance offset */
+  offsetLeft?: string;
+  /** Custom right distance offset */
+  offsetRight?: string;
+  /** Automatically collapse launcher to icon-only on mobile screens (defaults to true) */
+  mobileCollapse?: boolean;
 }
 
 export type EngageWidgetProps = FeedbackWidgetProps;

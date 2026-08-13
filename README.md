@@ -3,26 +3,21 @@
 A lightweight, reskinnable, embeddable React component package for user engagement: feedback widgets, bug reporting with auto-telemetry, feature suggestions, newsletter subscriptions, broadcasts, FAQs, and support ticketing.
 
 <p align="center">
-  <img src="docs/widget-demo.jpg" alt="React Engage Widget Demo" width="700" />
+  <img src="docs/react-engage-demo-light.gif" alt="React Engage Animated Feature Demo" width="760" />
 </p>
 
-## Features & Workflows
+## Features and Workflows
 
 ### 1. Embedded Floating Widget (`EngageWidget`)
-- **📬 Newsletter Subscription**: Direct email signup tab with confirmation feedback.
-- **💡 Feature Suggestions**: Users can submit ideas, view existing requests, and vote.
-- **🐛 Bug Reporting**: Auto-captures browser context, route URL, OS, viewport size, and timestamp for effortless debugging.
-- **🎫 Support Tickets & FAQs**: Embedded FAQ search and support ticket creation.
-
-<p align="center">
-  <img src="docs/admin-demo.jpg" alt="React Engage Admin Panel Demo" width="700" />
-</p>
+- **Newsletter Subscription**: Direct email signup tab with confirmation feedback.
+- **Feature Suggestions**: Users can submit ideas, view existing requests, and vote.
+- **Bug Reporting**: Auto-captures browser context, route URL, OS, viewport size, and timestamp for effortless debugging.
+- **Support Tickets and FAQs**: Embedded FAQ search and support ticket creation.
 
 ### 2. In-App Management Panel (`EngageAdminPanel`)
-- **Broadcast Manager**: Send and track product announcements & newsletter emails.
-- **Subscriber List**: Search, view, and manage email subscribers.
-- **Feature Roadmap & Voting**: Prioritize feature requests based on community upvotes.
-- **Support Queue**: Track, assign, and resolve support tickets and bug telemetry.
+- **Support Inbox**: Split view to inspect bug reports with auto-captured metadata (URL, browser, OS, screen resolution) and reply via email.
+- **Audience & Newsletters**: Send and track product announcements & newsletter emails.
+- **Email Templates**: Edit welcome emails, ticket reply templates, and broadcast newsletters.
 
 ---
 
@@ -61,3 +56,16 @@ export default function App() {
 ## Theme Support
 
 Supports `inherit`, `system`, `light`, and `dark` modes with semantic tokens (`--card-bg`, `--card-border`, `--accent`, `--foreground`, `--muted`).
+
+## Mobile & Positioning Customization
+
+To clear host mobile navigation bars or customize placement:
+
+```tsx
+<EngageWidget
+  appId="my-app"
+  position="bottom-right"
+  offsetBottom="80px"     // Elevates launcher above mobile bottom nav bars
+  mobileCollapse={true}   // Automatically collapses to circular icon on screens <= 640px
+/>
+```
