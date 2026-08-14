@@ -147,7 +147,7 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
                 endpointUrl={endpointUrl}
                 user={user}
                 refreshKey={ticketRefreshKey}
-                onNewRequest={() => setSupportView('new')}
+                onBack={() => setSupportView('new')}
               />
             )}
           </div>

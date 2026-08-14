@@ -6,7 +6,7 @@ interface MyTicketsTabProps {
   endpointUrl?: string;
   user?: WidgetUser;
   refreshKey?: number;
-  onNewRequest?: () => void;
+  onBack?: () => void;
 }
 
 const TYPE_LABELS: Record<EngageTicket['type'], string> = {
@@ -28,7 +28,7 @@ export const MyTicketsTab: React.FC<MyTicketsTabProps> = ({
   endpointUrl,
   user,
   refreshKey = 0,
-  onNewRequest,
+  onBack,
 }) => {
   const [tickets, setTickets] = useState<EngageTicket[]>([]);
   const [expandedTicketId, setExpandedTicketId] = useState<string | null>(null);
@@ -76,11 +76,11 @@ export const MyTicketsTab: React.FC<MyTicketsTabProps> = ({
           <span>{tickets.length} {tickets.length === 1 ? 'submission' : 'submissions'}</span>
         </div>
         <div className="rfw-ticket-toolbar-actions">
-          {onNewRequest ? (
+          {onBack ? (
             <button
               type="button"
               className="rfw-icon-btn"
-              onClick={onNewRequest}
+              onClick={onBack}
               aria-label="Back to support form"
               title="Back to support form"
             >
