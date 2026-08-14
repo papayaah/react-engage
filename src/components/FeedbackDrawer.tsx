@@ -1,8 +1,15 @@
 import React, { useState } from 'react';
-import { FeedbackWidgetProps } from '../types';
+import {
+  BugReportPayload,
+  FeedbackWidgetProps,
+  NewsletterPayload,
+  SuggestionPayload,
+  TicketPayload,
+} from '../types';
 import { FaqTab } from './tabs/FaqTab';
 import { FeedbackFormTab, FeedbackCategory } from './tabs/FeedbackFormTab';
 import { NewsletterTab } from './tabs/NewsletterTab';
+import { MyTicketsTab } from './tabs/MyTicketsTab';
 import { X, HelpCircle, MessageSquare, Mail } from 'lucide-react';
 
 interface FeedbackDrawerProps extends FeedbackWidgetProps {
@@ -24,10 +31,12 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
   onClose,
 }) => {
   const [activeTab, setActiveTab] = useState<'faq' | 'feedback' | 'newsletter'>('faq');
+  const [supportView, setSupportView] = useState<'new' | 'tickets'>('new');
+  const [ticketRefreshKey, setTicketRefreshKey] = useState(0);
   const initialFeedbackCategory: FeedbackCategory = 'bug';
 
   // Fallback submit handlers
-  const handleBugSubmit = async (payload: any) => {
+  const handleBugSubmit = async (payload: BugReportPayload) => {
     if (onSubmitBug) {
       await onSubmitBug(payload);
     } else if (endpointUrl) {
@@ -36,9 +45,10 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
     } else {
       console.log('[Engage] Bug report payload:', payload);
     }
+    setTicketRefreshKey((current) => current + 1);
   };
 
-  const handleSuggestionSubmit = async (payload: any) => {
+  const handleSuggestionSubmit = async (payload: SuggestionPayload) => {
     if (onSubmitSuggestion) {
       await onSubmitSuggestion(payload);
     } else if (endpointUrl) {
@@ -47,9 +57,10 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
     } else {
       console.log('[Engage] Suggestion payload:', payload);
     }
+    setTicketRefreshKey((current) => current + 1);
   };
 
-  const handleTicketSubmit = async (payload: any) => {
+  const handleTicketSubmit = async (payload: TicketPayload) => {
     if (onSubmitTicket) {
       await onSubmitTicket(payload);
     } else if (endpointUrl) {
@@ -58,9 +69,10 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
     } else {
       console.log('[Engage] Ticket payload:', payload);
     }
+    setTicketRefreshKey((current) => current + 1);
   };
 
-  const handleNewsletterSubmit = async (payload: any) => {
+  const handleNewsletterSubmit = async (payload: NewsletterPayload) => {
     if (onSubmitNewsletter) {
       await onSubmitNewsletter(payload);
     } else if (endpointUrl) {
@@ -81,7 +93,7 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
         </button>
       </div>
 
-      {/* 3-Tab Navigation Bar */}
+      {/* Main navigation */}
       <div className="rfw-nav">
         <button
           className="rfw-nav-btn"
@@ -95,7 +107,10 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
         <button
           className="rfw-nav-btn"
           data-active={activeTab === 'feedback'}
-          onClick={() => setActiveTab('feedback')}
+          onClick={() => {
+            setActiveTab('feedback');
+            setSupportView('new');
+          }}
         >
           <MessageSquare size={15} />
           <span>{labels?.bugTabTitle || 'Support'}</span>
@@ -115,15 +130,27 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
       <div className="rfw-body">
         {activeTab === 'faq' && <FaqTab faqs={faqs} />}
         {activeTab === 'feedback' && (
-          <FeedbackFormTab
-            appId={appId}
-            user={user}
-            themeMode={themeMode}
-            initialCategory={initialFeedbackCategory}
-            onSubmitBug={handleBugSubmit}
-            onSubmitSuggestion={handleSuggestionSubmit}
-            onSubmitTicket={handleTicketSubmit}
-          />
+          <div className="rfw-support-panel">
+            {supportView === 'new' ? (
+              <FeedbackFormTab
+                appId={appId}
+                user={user}
+                themeMode={themeMode}
+                initialCategory={initialFeedbackCategory}
+                onSubmitBug={handleBugSubmit}
+                onSubmitSuggestion={handleSuggestionSubmit}
+                onSubmitTicket={handleTicketSubmit}
+                onViewTickets={() => setSupportView('tickets')}
+              />
+            ) : (
+              <MyTicketsTab
+                endpointUrl={endpointUrl}
+                user={user}
+                refreshKey={ticketRefreshKey}
+                onNewRequest={() => setSupportView('new')}
+              />
+            )}
+          </div>
         )}
         {activeTab === 'newsletter' && (
           <NewsletterTab
@@ -136,4 +163,3 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
     </div>
   );
 };
-

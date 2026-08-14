@@ -273,10 +273,11 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
 
   return (
     <div
+      className="rfw-admin-panel"
       style={{
         display: 'flex',
         flexDirection: 'column',
-        height: '750px',
+        minHeight: '750px',
         backgroundColor: 'var(--background, #ffffff)',
         color: 'var(--foreground, #0f172a)',
         border: '1px solid var(--card-border, #e2e8f0)',
@@ -287,17 +288,21 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
     >
       {/* Top Navbar */}
       <div
+        className="rfw-admin-navbar"
         style={{
           display: 'flex',
+          flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '12px 20px',
+          gap: 12,
           borderBottom: '1px solid var(--card-border, #e2e8f0)',
           backgroundColor: 'var(--card-bg, #f8fafc)',
+          flexWrap: 'wrap',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#10b981' }} />
+          <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#10b981', flexShrink: 0 }} />
           <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--foreground)' }}>Engage Admin Dashboard</h2>
           <span
             style={{
@@ -313,7 +318,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
         </div>
 
         {/* Navigation Tabs */}
-        <div style={{ display: 'flex', gap: 6, background: 'var(--muted-bg, #e2e8f0)', padding: 4, borderRadius: 8 }}>
+        <div className="rfw-admin-tabs" style={{ display: 'flex', gap: 6, background: 'var(--muted-bg, #e2e8f0)', padding: 4, borderRadius: 8, flexWrap: 'wrap' }}>
           <button
             onClick={() => setActiveTab('inbox')}
             style={{
@@ -331,7 +336,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
             }}
           >
             <Inbox size={14} />
-            <span>Support Inbox</span>
+            <span className="rfw-tab-text">Support Inbox</span>
             {tickets.length > 0 && (
               <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 10, background: 'rgba(255,255,255,0.25)' }}>
                 {tickets.length}
@@ -356,7 +361,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
             }}
           >
             <Mail size={14} />
-            <span>Audience & Newsletters</span>
+            <span className="rfw-tab-text">Audience & Newsletters</span>
           </button>
 
           <button
@@ -376,24 +381,26 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
             }}
           >
             <FileText size={14} />
-            <span>Email Templates</span>
+            <span className="rfw-tab-text">Email Templates</span>
           </button>
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      <div className="rfw-admin-content" style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         {/* TAB 1: SUPPORT INBOX */}
         {activeTab === 'inbox' && (
           <>
             {/* Left Sidebar List */}
             <div
+              className="rfw-admin-inbox-sidebar"
               style={{
                 width: '340px',
                 borderRight: '1px solid var(--card-border, #e2e8f0)',
                 display: 'flex',
                 flexDirection: 'column',
                 backgroundColor: 'var(--muted-bg, #f8fafc)',
+                flexShrink: 0,
               }}
             >
               {/* Filter bar */}
@@ -508,7 +515,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
             </div>
 
             {/* Right Ticket Detail & Reply Panel */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 20, overflowY: 'auto' }}>
+            <div className="rfw-admin-inbox-detail" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 20, overflowY: 'auto', minWidth: 0 }}>
               {selectedTicket ? (
                 <>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>

@@ -232,12 +232,27 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
+.rfw-mini-btn-icon {
+  flex: 0 0 34px;
+  width: 34px;
+  padding-inline: 0;
+  margin-left: 2px;
+  border-left: 1px solid var(--rfw-card-border);
+  border-radius: 0 6px 6px 0;
+}
+
 /* Content Area */
 .rfw-body {
   flex: 1;
   padding: 20px;
   overflow-y: auto;
   display: flex;
+  flex-direction: column;
+}
+
+.rfw-support-panel {
+  display: flex;
+  min-height: 100%;
   flex-direction: column;
 }
 
@@ -311,6 +326,22 @@
   cursor: not-allowed;
 }
 
+.rfw-btn-secondary {
+  width: 100%;
+  padding: 10px 12px;
+  background-color: var(--rfw-card-bg);
+  color: var(--rfw-fg);
+  border: 1px solid var(--rfw-card-border);
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.rfw-btn-secondary:hover {
+  border-color: var(--rfw-accent);
+}
+
 /* Success state view */
 .rfw-success-box {
   display: flex;
@@ -332,6 +363,240 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.rfw-success-actions {
+  width: min(240px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.rfw-success-actions .rfw-btn-submit {
+  margin-top: 0;
+}
+
+/* Signed-in user's ticket history */
+.rfw-tickets-panel {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rfw-tickets-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rfw-tickets-toolbar > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rfw-tickets-toolbar strong {
+  color: var(--rfw-fg);
+  font-size: 14px;
+}
+
+.rfw-tickets-toolbar span {
+  color: var(--rfw-muted);
+  font-size: 12px;
+}
+
+.rfw-ticket-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rfw-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--rfw-card-border);
+  border-radius: 8px;
+  background: var(--rfw-card-bg);
+  color: var(--rfw-muted);
+  cursor: pointer;
+}
+
+.rfw-icon-btn:hover:not(:disabled) {
+  border-color: var(--rfw-accent);
+  color: var(--rfw-fg);
+}
+
+.rfw-icon-btn:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.rfw-empty-state {
+  display: flex;
+  flex: 1;
+  min-height: 180px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  text-align: center;
+  color: var(--rfw-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.rfw-empty-state strong {
+  color: var(--rfw-fg);
+  font-size: 14px;
+}
+
+.rfw-empty-state span {
+  max-width: 270px;
+}
+
+.rfw-inline-error {
+  padding: 9px 11px;
+  border: 1px solid var(--rfw-loss);
+  border-radius: 8px;
+  color: var(--rfw-loss);
+  font-size: 12px;
+}
+
+.rfw-ticket-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rfw-ticket-card {
+  overflow: hidden;
+  border: 1px solid var(--rfw-card-border);
+  border-radius: 10px;
+  background: var(--rfw-card-bg);
+}
+
+.rfw-ticket-card[data-expanded="true"] {
+  border-color: var(--rfw-accent);
+}
+
+.rfw-ticket-summary {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px;
+  border: 0;
+  background: transparent;
+  color: var(--rfw-muted);
+  cursor: pointer;
+  text-align: left;
+}
+
+.rfw-ticket-summary-main {
+  min-width: 0;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rfw-ticket-summary-main > strong {
+  overflow: hidden;
+  color: var(--rfw-fg);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rfw-ticket-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rfw-type-badge,
+.rfw-status-badge {
+  padding: 2px 7px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-transform: capitalize;
+}
+
+.rfw-type-badge {
+  background: color-mix(in srgb, var(--rfw-accent) 15%, transparent);
+  color: var(--rfw-accent);
+}
+
+.rfw-type-badge[data-type="bug"] {
+  background: color-mix(in srgb, var(--rfw-loss) 15%, transparent);
+  color: var(--rfw-loss);
+}
+
+.rfw-status-badge {
+  background: var(--rfw-card-border);
+  color: var(--rfw-muted);
+}
+
+.rfw-status-badge[data-status="resolved"],
+.rfw-status-badge[data-status="closed"] {
+  color: var(--rfw-fg);
+}
+
+.rfw-ticket-date {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--rfw-muted);
+  font-size: 11px;
+}
+
+.rfw-ticket-detail {
+  padding: 0 12px 12px;
+  border-top: 1px solid var(--rfw-card-border);
+  color: var(--rfw-fg);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.rfw-ticket-detail p {
+  margin: 12px 0;
+  white-space: pre-wrap;
+}
+
+.rfw-ticket-reference {
+  margin-top: 10px;
+  color: var(--rfw-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+}
+
+.rfw-ticket-reply-note {
+  padding: 9px 10px;
+  border-radius: 8px;
+  background: var(--rfw-bg);
+  color: var(--rfw-muted);
+  font-size: 11px;
+}
+
+.rfw-ticket-reply-note strong {
+  color: var(--rfw-fg);
+}
+
+.rfw-spin {
+  animation: rfw-spin 0.8s linear infinite;
+}
+
+@keyframes rfw-spin {
+  to { transform: rotate(360deg); }
 }
 
 /* FAQ item card */
@@ -375,6 +640,17 @@
   color: var(--rfw-muted);
 }
 
+/* Force icon-only button regardless of screen size */
+.rfw-root[data-icon-only="true"] .rfw-launcher-btn span {
+  display: none !important;
+}
+
+.rfw-root[data-icon-only="true"] .rfw-launcher-btn {
+  padding: 14px !important;
+  border-radius: 50% !important;
+  gap: 0 !important;
+}
+
 /* Responsive Mobile Layout & Navigation Bar Clearance */
 @media (max-width: 640px) {
   /* Default elevation for mobile screens to clear bottom navigation bars */
@@ -391,12 +667,14 @@
     left: var(--rfw-offset-left, 16px);
   }
 
-  /* Collapse launcher text on mobile for data-mobile-collapse="true" */
-  .rfw-root[data-mobile-collapse="true"] .rfw-launcher-btn span {
+  /* Collapse launcher text on mobile for data-mobile-collapse="true" or when iconOnly prop is set */
+  .rfw-root[data-mobile-collapse="true"] .rfw-launcher-btn span,
+  .rfw-root[data-icon-only="true"] .rfw-launcher-btn span {
     display: none;
   }
 
-  .rfw-root[data-mobile-collapse="true"] .rfw-launcher-btn {
+  .rfw-root[data-mobile-collapse="true"] .rfw-launcher-btn,
+  .rfw-root[data-icon-only="true"] .rfw-launcher-btn {
     padding: 14px;
     border-radius: 50%;
     gap: 0;
@@ -406,5 +684,36 @@
   .rfw-drawer {
     width: calc(100vw - 32px);
     max-height: calc(100vh - 120px);
+  }
+
+  /* Admin Dashboard Mobile Responsive Styles */
+  .rfw-admin-navbar {
+    padding: 10px 14px !important;
+  }
+
+  .rfw-admin-tabs {
+    width: 100%;
+  }
+
+  .rfw-admin-tabs button {
+    flex: 1;
+    justify-content: center;
+    padding: 8px 10px !important;
+  }
+
+  .rfw-admin-content {
+    flex-direction: column !important;
+  }
+
+  .rfw-admin-inbox-sidebar {
+    width: 100% !important;
+    max-height: 240px;
+    border-right: none !important;
+    border-bottom: 1px solid var(--rfw-card-border, #e2e8f0);
+  }
+
+  .rfw-admin-inbox-detail {
+    width: 100% !important;
+    padding: 14px !important;
   }
 }

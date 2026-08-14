@@ -9,7 +9,7 @@ import {
   Attachment,
 } from '../../types';
 import { useEnvironmentMeta } from '../../hooks/useEnvironmentMeta';
-import { CheckCircle2, AlertCircle, Paperclip, X, Bug, Lightbulb, LifeBuoy } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Paperclip, X, Bug, Lightbulb, LifeBuoy, Inbox } from 'lucide-react';
 
 export type FeedbackCategory = 'bug' | 'suggestion' | 'support';
 
@@ -21,6 +21,7 @@ interface FeedbackFormTabProps {
   onSubmitBug: (payload: BugReportPayload) => Promise<void> | void;
   onSubmitSuggestion: (payload: SuggestionPayload) => Promise<void> | void;
   onSubmitTicket: (payload: TicketPayload) => Promise<void> | void;
+  onViewTickets?: () => void;
 }
 
 export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
@@ -31,6 +32,7 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
   onSubmitBug,
   onSubmitSuggestion,
   onSubmitTicket,
+  onViewTickets,
 }) => {
   const envMeta = useEnvironmentMeta(themeMode);
 
@@ -173,18 +175,25 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
             ? 'Thank you for reaching out. We will respond to your email shortly.'
             : 'Thank you for your feedback! We will review this to improve the app.'}
         </p>
-        <button
-          className="rfw-btn-submit"
-          style={{ width: 'auto', padding: '8px 20px', marginTop: 12 }}
-          onClick={() => {
-            setIsSubmitted(false);
-            setTitle('');
-            setMessage('');
-            setAttachments([]);
-          }}
-        >
-          Submit More Feedback
-        </button>
+        <div className="rfw-success-actions">
+          {onViewTickets ? (
+            <button type="button" className="rfw-btn-submit" onClick={onViewTickets}>
+              View My Tickets
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className="rfw-btn-secondary"
+            onClick={() => {
+              setIsSubmitted(false);
+              setTitle('');
+              setMessage('');
+              setAttachments([]);
+            }}
+          >
+            Submit More Feedback
+          </button>
+        </div>
       </div>
     );
   }
@@ -222,6 +231,18 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
           <LifeBuoy size={13} />
           <span>Support</span>
         </button>
+
+        {onViewTickets ? (
+          <button
+            type="button"
+            className="rfw-mini-btn rfw-mini-btn-icon"
+            onClick={onViewTickets}
+            aria-label="View my tickets"
+            title="My tickets"
+          >
+            <Inbox size={14} />
+          </button>
+        ) : null}
       </div>
 
       {errorMsg && (

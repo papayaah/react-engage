@@ -8,10 +8,10 @@ export { BugReportTab } from './components/tabs/BugReportTab';
 export { SuggestionTab } from './components/tabs/SuggestionTab';
 export { TicketTab } from './components/tabs/TicketTab';
 export { NewsletterTab } from './components/tabs/NewsletterTab';
+export { MyTicketsTab } from './components/tabs/MyTicketsTab';
 
 export { useEnvironmentMeta } from './hooks/useEnvironmentMeta';
 export { useFeedbackTheme } from './hooks/useFeedbackTheme';
 export { sendPayloadToEndpoint } from './utils/adapters';
 
 export * from './types';
-

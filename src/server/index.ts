@@ -28,11 +28,20 @@ export interface BroadcastRecord {
   sentAt: string;
 }
 
+export interface EngageRequestUser {
+  id?: string;
+  email: string;
+  name?: string;
+  isAdmin?: boolean;
+}
+
 export interface EngageServerConfig {
   apiKey?: string;
   adminEmail?: string;
   senderEmail?: string;
   senderName?: string;
+  /** Resolve the authenticated host-app user for user-scoped and admin requests. */
+  resolveRequestUser?: (request: NextRequest) => Promise<EngageRequestUser | null> | EngageRequestUser | null;
   db?: any;
   tables?: {
     tickets?: any;
@@ -101,10 +110,52 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
     process.env.ENGAGE_SENDER_NAME ||
     process.env.FEEDBACK_SENDER_NAME ||
     'Trading Diary Support';
+  const resolveRequestUser = async (req: NextRequest) => config?.resolveRequestUser
+    ? config.resolveRequestUser(req)
+    : null;
+  const requireAdmin = async (req: NextRequest) => {
+    if (!config?.resolveRequestUser) return null;
+    const requestUser = await resolveRequestUser(req);
+    return requestUser?.isAdmin ? null : NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  };
 
   async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const action = searchParams.get('action');
+
+    if (action === 'list_user_tickets') {
+      const requestUser = await resolveRequestUser(req);
+      if (!requestUser?.email) {
+        return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+      }
+
+      const normalizedEmail = requestUser.email.toLowerCase();
+      if (db && tables?.tickets) {
+        try {
+          const { and, desc, eq, ne, sql } = await import('drizzle-orm');
+          const dbTickets = await db
+            .select()
+            .from(tables.tickets)
+            .where(and(
+              ne(tables.tickets.type, 'newsletter'),
+              eq(sql`lower(${tables.tickets.userEmail})`, normalizedEmail),
+            ))
+            .orderBy(desc(tables.tickets.createdAt));
+          return NextResponse.json({ tickets: dbTickets });
+        } catch (e) {
+          console.error('[Engage API User Tickets Fetch Error]:', e);
+          return NextResponse.json({ error: 'Failed to load tickets' }, { status: 500 });
+        }
+      }
+
+      return NextResponse.json({
+        tickets: [...globalTicketStore]
+          .filter((ticket) =>
+            ticket.type !== 'newsletter' && ticket.userEmail?.toLowerCase() === normalizedEmail
+          )
+          .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)),
+      });
+    }
 
     if (action === 'unsubscribe') {
       const userEmail = searchParams.get('email');
@@ -128,6 +179,8 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
     }
 
     if (action === 'list_subscribers') {
+      const forbidden = await requireAdmin(req);
+      if (forbidden) return forbidden;
       if (db && tables?.subscribers) {
         try {
           const dbSubscribers = await db.select().from(tables.subscribers);
@@ -149,6 +202,8 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
     }
 
     if (action === 'list_broadcasts') {
+      const forbidden = await requireAdmin(req);
+      if (forbidden) return forbidden;
       if (db && tables?.broadcasts) {
         try {
           const dbBroadcasts = await db.select().from(tables.broadcasts);
@@ -161,6 +216,8 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
     }
 
     if (action === 'list_tickets') {
+      const forbidden = await requireAdmin(req);
+      if (forbidden) return forbidden;
       if (db && tables?.tickets) {
         try {
           const { ne } = await import('drizzle-orm');
@@ -173,6 +230,8 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
       return NextResponse.json({ tickets: globalTicketStore.filter(t => t.type !== 'newsletter') });
     }
 
+    const forbidden = await requireAdmin(req);
+    if (forbidden) return forbidden;
     return NextResponse.json({ tickets: globalTicketStore });
   }
 
@@ -189,6 +248,8 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
 
       // 1. ADMIN ACTION: Send reply email to user
       if (action === 'send_reply') {
+        const forbidden = await requireAdmin(req);
+        if (forbidden) return forbidden;
         const { ticketId, userEmail, replyText } = body;
         console.log(`[Engage API] Sending support reply to ${userEmail} for ticket ${ticketId}`);
 
@@ -237,6 +298,8 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
 
       // 2. ADMIN ACTION: Send newsletter broadcast to subscribers
       if (action === 'send_broadcast') {
+        const forbidden = await requireAdmin(req);
+        if (forbidden) return forbidden;
         const { subject, body: broadcastBody } = body;
         console.log(`[Engage API] Dispatching newsletter broadcast: ${subject}`);
 
@@ -306,7 +369,8 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
       const { type, payload } = body;
       console.log(`[Engage API] Received ${type} submission from app: ${payload?.appId || 'unknown'}`);
 
-      const userEmail = payload?.email || payload?.user?.email || 'Anonymous';
+      const requestUser = await resolveRequestUser(req);
+      const userEmail = requestUser?.email || payload?.email || payload?.user?.email || 'Anonymous';
       const userMessage = payload?.message || payload?.description || payload?.subject || 'Newsletter Subscription';
       const ticketId = `tkt_${Date.now()}`;
 
@@ -320,7 +384,7 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
         subject: payload?.subject || payload?.title || `${type} submission`,
         message: userMessage,
         userEmail,
-        userName: payload?.name || payload?.user?.name || null,
+        userName: requestUser?.name || payload?.name || payload?.user?.name || null,
         environment: payload?.environment || null,
         createdAt: new Date().toISOString(),
       };

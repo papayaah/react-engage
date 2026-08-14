@@ -71,6 +71,17 @@ export interface TicketPayload {
   timestamp: string;
 }
 
+export interface EngageTicket {
+  id: string;
+  type: 'bug' | 'suggestion' | 'ticket';
+  category?: string;
+  severity?: BugSeverity;
+  status: 'open' | 'in_progress' | 'resolved' | 'closed';
+  subject?: string;
+  message: string;
+  createdAt: string;
+}
+
 export interface NewsletterPayload {
   appId: string;
   email: string;
@@ -97,6 +108,7 @@ export interface CustomLabels {
   suggestionTabTitle?: string;
   ticketTabTitle?: string;
   newsletterTabTitle?: string;
+  myTicketsTabTitle?: string;
   submitButton?: string;
   successMessage?: string;
 }
@@ -142,7 +154,8 @@ export interface FeedbackWidgetProps {
   offsetRight?: string;
   /** Automatically collapse launcher to icon-only on mobile screens (defaults to true) */
   mobileCollapse?: boolean;
+  /** Force launcher to display as an icon-only button on all screen sizes */
+  iconOnly?: boolean;
 }
 
 export type EngageWidgetProps = FeedbackWidgetProps;
-

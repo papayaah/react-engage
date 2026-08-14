@@ -13,6 +13,7 @@ A lightweight, reskinnable, embeddable React component package for user engageme
 - **Feature Suggestions**: Users can submit ideas, view existing requests, and vote.
 - **Bug Reporting**: Auto-captures browser context, route URL, OS, viewport size, and timestamp for effortless debugging.
 - **Support Tickets and FAQs**: Embedded FAQ search and support ticket creation.
+- **My Tickets**: Signed-in users can review their own bug reports, suggestions, support requests, and current statuses.
 
 ### 2. In-App Management Panel (`EngageAdminPanel`)
 - **Support Inbox**: Split view to inspect bug reports with auto-captured metadata (URL, browser, OS, screen resolution) and reply via email.
@@ -42,6 +43,7 @@ export default function App() {
       position="bottom-right"
       theme="inherit"
       endpointUrl="/api/engage"
+      user={session?.user}
     />
   );
 }
@@ -51,7 +53,11 @@ export default function App() {
 
 - `EngageWidget`: Floating engagement widget for users.
 - `EngageAdminPanel`: In-app admin dashboard for managing broadcasts, subscribers, and feedback.
-- `@reactkits.dev/react-engage/server`: Plug-and-play route handlers (`createFetchHandler`, `createExpressHandler`).
+- `@reactkits.dev/react-engage/server`: Next.js route handler factory (`createEngageRouteHandler`).
+
+The `My Tickets` endpoint is authenticated by the host application. Configure
+`resolveRequestUser` on `createEngageRouteHandler` and return the current user's
+email. Set `isAdmin` for users who may access the admin lists and actions.
 
 ## Theme Support
 
