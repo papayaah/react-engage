@@ -99,7 +99,7 @@ export const TicketTab: React.FC<TicketTabProps> = ({ appId, user, onSubmit }) =
         <input
           type="text"
           className="rfw-input"
-          placeholder="e.g. Account billing or trade sync issue"
+          placeholder="e.g. Question about billing or account setup"
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
           required

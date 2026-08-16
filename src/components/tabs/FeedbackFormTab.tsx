@@ -9,7 +9,8 @@ import {
   Attachment,
 } from '../../types';
 import { useEnvironmentMeta } from '../../hooks/useEnvironmentMeta';
-import { CheckCircle2, AlertCircle, Paperclip, X, Bug, Lightbulb, LifeBuoy, Inbox } from 'lucide-react';
+import { AreaSnipOverlay } from '../AreaSnipOverlay';
+import { CheckCircle2, AlertCircle, Paperclip, X, Bug, Lightbulb, LifeBuoy, Inbox, Crop, Image as ImageIcon, FileText } from 'lucide-react';
 
 export type FeedbackCategory = 'bug' | 'suggestion' | 'support';
 
@@ -45,23 +46,26 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
   const [severity, setSeverity] = useState<BugSeverity>('medium');
   const [suggestionType, setSuggestionType] = useState<SuggestionCategory>('new_feature');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isSnipping, setIsSnipping] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
+  const addFiles = (files: FileList | File[]) => {
     Array.from(files).forEach((file) => {
+      if (file.size > 10 * 1024 * 1024) {
+        setErrorMsg(`File "${file.name}" exceeds 10MB limit.`);
+        return;
+      }
       const reader = new FileReader();
       reader.onload = (event) => {
         setAttachments((prev) => [
           ...prev,
           {
-            name: file.name,
-            type: file.type,
+            name: file.name || `attachment-${Date.now()}`,
+            type: file.type || 'application/octet-stream',
             size: file.size,
             dataUrl: event.target?.result as string,
           },
@@ -69,6 +73,51 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
       };
       reader.readAsDataURL(file);
     });
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    addFiles(files);
+    e.target.value = '';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      addFiles(e.dataTransfer.files);
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    const files: File[] = [];
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.startsWith('image/')) {
+        const file = items[i].getAsFile();
+        if (file) files.push(file);
+      }
+    }
+
+    if (files.length > 0) {
+      addFiles(files);
+    }
   };
 
   const removeAttachment = (index: number) => {
@@ -80,20 +129,16 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
     setErrorMsg(null);
 
     // Validation rules:
-    // Support requires email and message.
-    // Bug / Suggestion require at least a title or message.
+    // Description/Message is required for all categories.
+    // Support also requires a valid email.
+    if (!message.trim()) {
+      setErrorMsg(category === 'support' ? 'Please enter your message.' : 'Please enter a description.');
+      return;
+    }
+
     if (category === 'support') {
       if (!email.trim() || !email.includes('@')) {
         setErrorMsg('Please provide a valid email address so our support team can reply.');
-        return;
-      }
-      if (!message.trim()) {
-        setErrorMsg('Please enter your support message.');
-        return;
-      }
-    } else {
-      if (!title.trim() && !message.trim()) {
-        setErrorMsg('Please fill in a brief summary or description.');
         return;
       }
     }
@@ -105,10 +150,11 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
         const payload: BugReportPayload = {
           appId,
           title: title.trim() || 'Bug Report',
-          description: message.trim() || title.trim(),
+          description: message.trim(),
           severity,
-          user: { ...user, email: email || user?.email },
-          attachments,
+          email: email.trim() || user?.email,
+          user: { ...user, email: email.trim() || user?.email },
+          attachments: attachments.length > 0 ? attachments : undefined,
           environment: envMeta,
         };
         await onSubmitBug(payload);
@@ -117,8 +163,10 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
           appId,
           title: title.trim() || 'Feature Suggestion',
           category: suggestionType,
-          description: message.trim() || title.trim(),
-          user: { ...user, email: email || user?.email },
+          description: message.trim(),
+          email: email.trim() || user?.email,
+          user: { ...user, email: email.trim() || user?.email },
+          attachments: attachments.length > 0 ? attachments : undefined,
           timestamp: new Date().toISOString(),
         };
         await onSubmitSuggestion(payload);
@@ -127,7 +175,9 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
           appId,
           subject: title.trim() || 'Support Request',
           message: message.trim(),
-          user: { ...user, email },
+          email: email.trim() || user?.email,
+          user: { ...user, email: email.trim() || user?.email },
+          attachments: attachments.length > 0 ? attachments : undefined,
           timestamp: new Date().toISOString(),
         };
         await onSubmitTicket(payload);
@@ -199,7 +249,11 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <form
+      onSubmit={handleSubmit}
+      onPaste={handlePaste}
+      style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
+    >
       {/* Mini Category Pills inside the parent tab */}
       <div className="rfw-mini-nav">
         <button
@@ -265,6 +319,26 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
         </div>
       )}
 
+      {/* Description / Message Area (Required, at top) */}
+      <div className="rfw-field">
+        <label className="rfw-label">
+          {category === 'support' ? 'Message' : 'Description'}
+        </label>
+        <textarea
+          className="rfw-textarea"
+          placeholder={
+            category === 'bug'
+              ? 'Describe what happened or steps to reproduce...'
+              : category === 'suggestion'
+              ? 'What problem does this idea solve or how can we improve?'
+              : 'How can our team help you?'
+          }
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          required
+        />
+      </div>
+
       {/* Dynamic Summary/Subject Field */}
       <div className="rfw-field">
         <label className="rfw-label">
@@ -279,9 +353,9 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
           className="rfw-input"
           placeholder={
             category === 'bug'
-              ? 'e.g. Chart failed to render after date change'
+              ? 'e.g. Navigation menu failed to open'
               : category === 'suggestion'
-              ? 'e.g. Add dark mode option for charts'
+              ? 'e.g. Add dark mode option or export support'
               : 'e.g. Question about my account'
           }
           value={title}
@@ -323,26 +397,6 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
         </div>
       )}
 
-      {/* Message / Description Area */}
-      <div className="rfw-field">
-        <label className="rfw-label">
-          {category === 'support' ? 'Your Message *' : 'Details / Description'}
-        </label>
-        <textarea
-          className="rfw-textarea"
-          placeholder={
-            category === 'bug'
-              ? 'Describe what happened or steps to reproduce...'
-              : category === 'suggestion'
-              ? 'What problem does this idea solve?'
-              : 'How can our team help you?'
-          }
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          required={category === 'support'}
-        />
-      </div>
-
       {/* Email Field - Required for Support, Optional for Bug & Suggestion */}
       <div className="rfw-field">
         <label className="rfw-label">
@@ -358,59 +412,74 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
         />
       </div>
 
-      {/* Optional Attachments for Bug & Support */}
-      {category !== 'suggestion' && (
-        <div className="rfw-field">
-          <label className="rfw-label">Attachments (Optional)</label>
-          <label
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6,
-              padding: '8px 12px',
-              borderRadius: 8,
-              border: '1px dashed var(--rfw-card-border)',
-              backgroundColor: 'var(--rfw-card-bg)',
-              cursor: 'pointer',
-              fontSize: 13,
-              color: 'var(--rfw-muted)',
-            }}
-          >
-            <Paperclip size={14} />
-            <span>Attach screenshot or log</span>
-            <input
-              type="file"
-              accept="image/*,.log,.json"
-              multiple
-              onChange={handleFileUpload}
-              style={{ display: 'none' }}
-            />
-          </label>
-          {attachments.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-              {attachments.map((att, i) => (
-                <span
-                  key={i}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 4,
-                    padding: '4px 8px',
-                    backgroundColor: 'var(--rfw-card-border)',
-                    borderRadius: 6,
-                    fontSize: 12,
-                    color: 'var(--rfw-fg)',
-                  }}
-                >
-                  {att.name}
-                  <X size={12} style={{ cursor: 'pointer' }} onClick={() => removeAttachment(i)} />
-                </span>
-              ))}
-            </div>
-          )}
+      {/* Attachments & Screen Capture Area */}
+      <div className="rfw-field">
+        <label className="rfw-label">Attachments (Optional)</label>
+        <div
+          className="rfw-dropzone"
+          data-dragging={isDragging}
+          onDragOver={handleDragOver}
+          onDragEnter={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          <div className="rfw-dropzone-actions">
+            <label className="rfw-dropzone-btn">
+              <Paperclip size={14} />
+              <span>Attach file</span>
+              <input
+                type="file"
+                accept="image/*,.log,.json,.txt,.csv"
+                multiple
+                onChange={handleFileUpload}
+                style={{ display: 'none' }}
+              />
+            </label>
+            <button
+              type="button"
+              className="rfw-dropzone-btn"
+              onClick={() => setIsSnipping(true)}
+              title="Click and drag to capture an area or spot on the page"
+            >
+              <Crop size={14} />
+              <span>Capture area</span>
+            </button>
+          </div>
+          <div className="rfw-dropzone-hint">
+            Drop files here or paste from clipboard (Ctrl/Cmd+V)
+          </div>
         </div>
-      )}
+
+        {/* Attachment List */}
+        {attachments.length > 0 && (
+          <div className="rfw-attachment-list">
+            {attachments.map((att, i) => {
+              const isImage = att.type.startsWith('image/') && att.dataUrl;
+              return (
+                <div key={i} className="rfw-attachment-item">
+                  {isImage ? (
+                    <img src={att.dataUrl} alt={att.name} className="rfw-attachment-thumb" />
+                  ) : (
+                    <FileText size={14} className="rfw-attachment-icon" />
+                  )}
+                  <span className="rfw-attachment-name" title={att.name}>{att.name}</span>
+                  <span className="rfw-attachment-size">
+                    ({Math.round(att.size / 1024)} KB)
+                  </span>
+                  <button
+                    type="button"
+                    className="rfw-attachment-remove"
+                    onClick={() => removeAttachment(i)}
+                    aria-label={`Remove ${att.name}`}
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Auto Telemetry Notice for Bugs */}
       {category === 'bug' && (
@@ -428,6 +497,17 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
           ? 'Submit Suggestion'
           : 'Send Support Request'}
       </button>
+
+      {/* In-Page Area Snipping Overlay */}
+      {isSnipping && (
+        <AreaSnipOverlay
+          onCapture={(attachment) => {
+            setAttachments((prev) => [...prev, attachment]);
+            setIsSnipping(false);
+          }}
+          onCancel={() => setIsSnipping(false)}
+        />
+      )}
     </form>
   );
 };

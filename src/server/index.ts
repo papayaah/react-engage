@@ -10,6 +10,13 @@ export interface StoredTicket {
   message: string;
   userEmail?: string;
   userName?: string;
+  attachments?: Array<{
+    name: string;
+    type: string;
+    size: number;
+    dataUrl?: string;
+    url?: string;
+  }>;
   createdAt: string;
   environment?: {
     path?: string;
@@ -61,10 +68,10 @@ const globalTicketStore: StoredTicket[] = [
     category: 'BUG',
     severity: 'high',
     status: 'open',
-    subject: 'IBKR CSV import failing on split orders',
-    message: 'When uploading my trade execution report from Interactive Brokers, split buy orders cause a validation error.',
+    subject: 'Batch CSV import failing on multi-row records',
+    message: 'When uploading batch report data, split row entries cause an unexpected validation error.',
     userEmail: 'trader.alex@example.com',
-    userName: 'Alex Trader',
+    userName: 'Alex Developer',
     createdAt: new Date(Date.now() - 3600000 * 4).toISOString(),
     environment: {
       path: '/import',
@@ -370,7 +377,16 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
       console.log(`[Engage API] Received ${type} submission from app: ${payload?.appId || 'unknown'}`);
 
       const requestUser = await resolveRequestUser(req);
-      const userEmail = requestUser?.email || payload?.email || payload?.user?.email || 'Anonymous';
+      const userEmail =
+        payload?.email?.trim() ||
+        payload?.user?.email?.trim() ||
+        requestUser?.email?.trim() ||
+        'Anonymous';
+      const userName =
+        payload?.name?.trim() ||
+        payload?.user?.name?.trim() ||
+        requestUser?.name?.trim() ||
+        null;
       const userMessage = payload?.message || payload?.description || payload?.subject || 'Newsletter Subscription';
       const ticketId = `tkt_${Date.now()}`;
 
@@ -384,7 +400,8 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
         subject: payload?.subject || payload?.title || `${type} submission`,
         message: userMessage,
         userEmail,
-        userName: requestUser?.name || payload?.name || payload?.user?.name || null,
+        userName,
+        attachments: payload?.attachments || null,
         environment: payload?.environment || null,
         createdAt: new Date().toISOString(),
       };

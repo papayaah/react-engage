@@ -71,7 +71,7 @@ export const MyTicketsTab: React.FC<MyTicketsTabProps> = ({
   return (
     <div className="rfw-tickets-panel">
       <div className="rfw-tickets-toolbar">
-        <div>
+        <div className="rfw-tickets-toolbar-info">
           <strong>My tickets</strong>
           <span>{tickets.length} {tickets.length === 1 ? 'submission' : 'submissions'}</span>
         </div>

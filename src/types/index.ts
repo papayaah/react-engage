@@ -48,6 +48,8 @@ export interface BugReportPayload {
   title: string;
   description: string;
   severity: BugSeverity;
+  email?: string;
+  name?: string;
   user?: WidgetUser;
   attachments?: Attachment[];
   environment: EnvironmentMeta;
@@ -58,7 +60,10 @@ export interface SuggestionPayload {
   title: string;
   category: SuggestionCategory;
   description: string;
+  email?: string;
+  name?: string;
   user?: WidgetUser;
+  attachments?: Attachment[];
   timestamp: string;
 }
 
@@ -67,7 +72,10 @@ export interface TicketPayload {
   subject: string;
   message: string;
   category?: string;
+  email?: string;
+  name?: string;
   user?: WidgetUser;
+  attachments?: Attachment[];
   timestamp: string;
 }
 
@@ -79,6 +87,7 @@ export interface EngageTicket {
   status: 'open' | 'in_progress' | 'resolved' | 'closed';
   subject?: string;
   message: string;
+  attachments?: Attachment[];
   createdAt: string;
 }
 

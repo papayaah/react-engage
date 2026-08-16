@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { BugReportPayload, BugSeverity, WidgetUser, Attachment } from '../../types';
 import { useEnvironmentMeta } from '../../hooks/useEnvironmentMeta';
-import { CheckCircle2, AlertCircle, Paperclip, X } from 'lucide-react';
+import { AreaSnipOverlay } from '../AreaSnipOverlay';
+import { CheckCircle2, AlertCircle, Paperclip, X, Crop, FileText } from 'lucide-react';
 
 interface BugReportTabProps {
   appId: string;
@@ -23,22 +24,25 @@ export const BugReportTab: React.FC<BugReportTabProps> = ({
   const [severity, setSeverity] = useState<BugSeverity>('medium');
   const [email, setEmail] = useState(user?.email || '');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isSnipping, setIsSnipping] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
+  const addFiles = (files: FileList | File[]) => {
     Array.from(files).forEach((file) => {
+      if (file.size > 10 * 1024 * 1024) {
+        setErrorMsg(`File "${file.name}" exceeds 10MB limit.`);
+        return;
+      }
       const reader = new FileReader();
       reader.onload = (event) => {
         setAttachments((prev) => [
           ...prev,
           {
-            name: file.name,
-            type: file.type,
+            name: file.name || `attachment-${Date.now()}`,
+            type: file.type || 'application/octet-stream',
             size: file.size,
             dataUrl: event.target?.result as string,
           },
@@ -46,6 +50,51 @@ export const BugReportTab: React.FC<BugReportTabProps> = ({
       };
       reader.readAsDataURL(file);
     });
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    addFiles(files);
+    e.target.value = '';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      addFiles(e.dataTransfer.files);
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    const files: File[] = [];
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.startsWith('image/')) {
+        const file = items[i].getAsFile();
+        if (file) files.push(file);
+      }
+    }
+
+    if (files.length > 0) {
+      addFiles(files);
+    }
   };
 
   const removeAttachment = (index: number) => {
@@ -112,7 +161,11 @@ export const BugReportTab: React.FC<BugReportTabProps> = ({
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <form
+      onSubmit={handleSubmit}
+      onPaste={handlePaste}
+      style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
+    >
       {errorMsg && (
         <div
           style={{
@@ -138,7 +191,7 @@ export const BugReportTab: React.FC<BugReportTabProps> = ({
         <input
           type="text"
           className="rfw-input"
-          placeholder="e.g. Chart failed to render after date range change"
+          placeholder="e.g. Navigation menu failed to open on click"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           required
@@ -160,7 +213,7 @@ export const BugReportTab: React.FC<BugReportTabProps> = ({
       </div>
 
       <div className="rfw-field">
-        <label className="rfw-label">Description & Steps to Reproduce</label>
+        <label className="rfw-label">Description</label>
         <textarea
           className="rfw-textarea"
           placeholder="Describe what happened and how to trigger it..."
@@ -183,46 +236,68 @@ export const BugReportTab: React.FC<BugReportTabProps> = ({
 
       {/* Attachments */}
       <div className="rfw-field">
-        <label className="rfw-label">Attachments / Screenshot</label>
-        <label
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-            padding: '8px 12px',
-            borderRadius: 8,
-            border: '1px dashed var(--rfw-card-border)',
-            backgroundColor: 'var(--rfw-card-bg)',
-            cursor: 'pointer',
-            fontSize: 13,
-            color: 'var(--rfw-muted)',
-          }}
+        <label className="rfw-label">Attachments (Optional)</label>
+        <div
+          className="rfw-dropzone"
+          data-dragging={isDragging}
+          onDragOver={handleDragOver}
+          onDragEnter={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
         >
-          <Paperclip size={14} />
-          <span>Attach image or file</span>
-          <input type="file" accept="image/*,.log,.json" multiple onChange={handleFileUpload} style={{ display: 'none' }} />
-        </label>
+          <div className="rfw-dropzone-actions">
+            <label className="rfw-dropzone-btn">
+              <Paperclip size={14} />
+              <span>Attach file</span>
+              <input
+                type="file"
+                accept="image/*,.log,.json,.txt,.csv"
+                multiple
+                onChange={handleFileUpload}
+                style={{ display: 'none' }}
+              />
+            </label>
+            <button
+              type="button"
+              className="rfw-dropzone-btn"
+              onClick={() => setIsSnipping(true)}
+              title="Click and drag to capture an area or spot on the page"
+            >
+              <Crop size={14} />
+              <span>Capture area</span>
+            </button>
+          </div>
+          <div className="rfw-dropzone-hint">
+            Drop files here or paste from clipboard (Ctrl/Cmd+V)
+          </div>
+        </div>
+
         {attachments.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-            {attachments.map((att, i) => (
-              <span
-                key={i}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  padding: '4px 8px',
-                  backgroundColor: 'var(--rfw-card-border)',
-                  borderRadius: 6,
-                  fontSize: 12,
-                  color: 'var(--rfw-fg)',
-                }}
-              >
-                {att.name}
-                <X size={12} style={{ cursor: 'pointer' }} onClick={() => removeAttachment(i)} />
-              </span>
-            ))}
+          <div className="rfw-attachment-list">
+            {attachments.map((att, i) => {
+              const isImage = att.type.startsWith('image/') && att.dataUrl;
+              return (
+                <div key={i} className="rfw-attachment-item">
+                  {isImage ? (
+                    <img src={att.dataUrl} alt={att.name} className="rfw-attachment-thumb" />
+                  ) : (
+                    <FileText size={14} className="rfw-attachment-icon" />
+                  )}
+                  <span className="rfw-attachment-name" title={att.name}>{att.name}</span>
+                  <span className="rfw-attachment-size">
+                    ({Math.round(att.size / 1024)} KB)
+                  </span>
+                  <button
+                    type="button"
+                    className="rfw-attachment-remove"
+                    onClick={() => removeAttachment(i)}
+                    aria-label={`Remove ${att.name}`}
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -234,6 +309,17 @@ export const BugReportTab: React.FC<BugReportTabProps> = ({
       <button type="submit" className="rfw-btn-submit" disabled={isSubmitting}>
         {isSubmitting ? 'Submitting...' : 'Submit Bug Report'}
       </button>
+
+      {/* In-Page Area Snipping Overlay */}
+      {isSnipping && (
+        <AreaSnipOverlay
+          onCapture={(attachment) => {
+            setAttachments((prev) => [...prev, attachment]);
+            setIsSnipping(false);
+          }}
+          onCancel={() => setIsSnipping(false)}
+        />
+      )}
     </form>
   );
 };

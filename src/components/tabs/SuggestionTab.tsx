@@ -97,7 +97,7 @@ export const SuggestionTab: React.FC<SuggestionTabProps> = ({ appId, user, onSub
         <input
           type="text"
           className="rfw-input"
-          placeholder="e.g. Add dark mode option for charts"
+          placeholder="e.g. Add dark mode option or export support"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           required
@@ -120,7 +120,7 @@ export const SuggestionTab: React.FC<SuggestionTabProps> = ({ appId, user, onSub
       </div>
 
       <div className="rfw-field">
-        <label className="rfw-label">Detailed Proposal</label>
+        <label className="rfw-label">Description</label>
         <textarea
           className="rfw-textarea"
           placeholder="How would this feature help you? What problem does it solve?"

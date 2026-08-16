@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Inbox, Mail, FileText, Send, User, RefreshCw, Filter, Eye, Users, Download, Search } from 'lucide-react';
+import { Inbox, Mail, FileText, Send, User, RefreshCw, Filter, Eye, Users, Download, Search, X, Paperclip } from 'lucide-react';
 
 export interface TicketItem {
   id: string;
@@ -13,6 +13,13 @@ export interface TicketItem {
   message: string;
   userEmail?: string;
   userName?: string;
+  attachments?: Array<{
+    name: string;
+    type: string;
+    size: number;
+    dataUrl?: string;
+    url?: string;
+  }>;
   createdAt: string;
   environment?: {
     path?: string;
@@ -48,17 +55,17 @@ const DEFAULT_TEMPLATES: EmailTemplate[] = [
   {
     id: 'welcome',
     name: 'Welcome Email (New Signup)',
-    subject: 'Welcome to Trading Diary!',
+    subject: 'Welcome to {{app_name}}!',
     htmlContent: `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
   <h2 style="color: #3b82f6;">Welcome aboard, {{user_name}}! 🎉</h2>
-  <p>Thank you for joining Trading Diary. We are excited to help you track, analyze, and elevate your trading journey.</p>
+  <p>Thank you for joining. We are excited to have you with us.</p>
   <p>To get started quickly:</p>
   <ul>
-    <li>Import your trade executions from your broker CSV</li>
-    <li>Set up your risk rules and trade tags</li>
+    <li>Explore the available tools and features</li>
+    <li>Configure your preferences in settings</li>
     <li>Use the floating feedback widget anytime you have questions</li>
   </ul>
-  <p style="color: #64748b; font-size: 13px; margin-top: 24px;">Happy Trading,<br />The Trading Diary Team</p>
+  <p style="color: #64748b; font-size: 13px; margin-top: 24px;">Best regards,<br />The Support Team</p>
 </div>`,
   },
   {
@@ -106,6 +113,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
   const [replyText, setReplyText] = useState('');
   const [isSendingReply, setIsSendingReply] = useState(false);
   const [replyStatus, setReplyStatus] = useState<string | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // Template state
   const [templates, setTemplates] = useState<EmailTemplate[]>(DEFAULT_TEMPLATES);
@@ -589,11 +597,137 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                       fontSize: 14,
                       lineHeight: 1.6,
                       whiteSpace: 'pre-wrap',
-                      marginBottom: 20,
+                      marginBottom: 16,
                     }}
                   >
                     {selectedTicket.message}
                   </div>
+
+                  {/* Attachments Section */}
+                  {selectedTicket.attachments && selectedTicket.attachments.length > 0 && (
+                    <div style={{ marginBottom: 20 }}>
+                      <div
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 600,
+                          color: 'var(--foreground, #0f172a)',
+                          marginBottom: 8,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                        }}
+                      >
+                        <Paperclip size={14} />
+                        <span>Attachments ({selectedTicket.attachments.length})</span>
+                      </div>
+                      <div
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                          gap: 10,
+                        }}
+                      >
+                        {selectedTicket.attachments.map((att, i) => {
+                          const isImage = att.type.startsWith('image/') || att.name.match(/\.(png|jpe?g|webp|gif|svg)$/i);
+                          const fileSrc = att.dataUrl || att.url;
+                          return (
+                            <div
+                              key={i}
+                              style={{
+                                padding: 10,
+                                borderRadius: 8,
+                                border: '1px solid var(--card-border, #e2e8f0)',
+                                backgroundColor: 'var(--card-bg, #ffffff)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 8,
+                              }}
+                            >
+                              {isImage && fileSrc ? (
+                                <div
+                                  style={{
+                                    width: '100%',
+                                    height: 120,
+                                    borderRadius: 6,
+                                    overflow: 'hidden',
+                                    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                  }}
+                                  onClick={() => setPreviewImage(fileSrc)}
+                                  title="Click to view full image"
+                                >
+                                  <img
+                                    src={fileSrc}
+                                    alt={att.name}
+                                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                                  />
+                                </div>
+                              ) : (
+                                <div
+                                  style={{
+                                    height: 60,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: 'var(--muted, #64748b)',
+                                  }}
+                                >
+                                  <FileText size={28} />
+                                </div>
+                              )}
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                                <div style={{ overflow: 'hidden', flex: 1 }}>
+                                  <div
+                                    style={{
+                                      fontSize: 12,
+                                      fontWeight: 500,
+                                      color: 'var(--foreground, #0f172a)',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      whiteSpace: 'nowrap',
+                                    }}
+                                    title={att.name}
+                                  >
+                                    {att.name}
+                                  </div>
+                                  <div style={{ fontSize: 11, color: 'var(--muted, #64748b)' }}>
+                                    {Math.round(att.size / 1024)} KB
+                                  </div>
+                                </div>
+                                {fileSrc && (
+                                  <a
+                                    href={fileSrc}
+                                    download={att.name}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    style={{
+                                      padding: '4px 8px',
+                                      borderRadius: 6,
+                                      border: '1px solid var(--card-border, #e2e8f0)',
+                                      color: 'var(--accent, #3b82f6)',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: 4,
+                                      fontSize: 11,
+                                      textDecoration: 'none',
+                                      flexShrink: 0,
+                                    }}
+                                    title={`Download ${att.name}`}
+                                  >
+                                    <Download size={12} />
+                                    <span>Download</span>
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Reply Editor Form */}
                   <form onSubmit={handleSendReply} style={{ marginTop: 'auto' }}>
@@ -1227,6 +1361,65 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
           </div>
         )}
       </div>
+
+      {/* Lightbox / Fullscreen Image Viewer Modal */}
+      {previewImage && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 999999,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 20,
+            backdropFilter: 'blur(4px)',
+          }}
+          onClick={() => setPreviewImage(null)}
+        >
+          <div
+            style={{
+              position: 'relative',
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setPreviewImage(null)}
+              style={{
+                position: 'absolute',
+                top: -36,
+                right: 0,
+                background: 'transparent',
+                border: 'none',
+                color: '#ffffff',
+                cursor: 'pointer',
+                padding: 4,
+              }}
+              aria-label="Close image preview"
+            >
+              <X size={24} />
+            </button>
+            <img
+              src={previewImage}
+              alt="Attachment Preview"
+              style={{
+                maxWidth: '100%',
+                maxHeight: '85vh',
+                borderRadius: 8,
+                boxShadow: '0 20px 25px -5px rgba(0,0,0,0.5)',
+                objectFit: 'contain',
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
