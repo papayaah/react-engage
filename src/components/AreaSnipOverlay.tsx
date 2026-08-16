@@ -194,7 +194,7 @@ export const AreaSnipOverlay: React.FC<AreaSnipOverlayProps> = ({ onCapture, onC
             height: rect.height,
             boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.45)',
             border: '2px dashed #3b82f6',
-            borderRadius: 4,
+            borderRadius: 'var(--rfw-radius-sm, 0px)',
             pointerEvents: 'none',
           }}
         >
@@ -208,7 +208,7 @@ export const AreaSnipOverlay: React.FC<AreaSnipOverlayProps> = ({ onCapture, onC
               fontSize: 11,
               fontWeight: 600,
               padding: '2px 6px',
-              borderRadius: 4,
+              borderRadius: 'var(--rfw-radius-sm, 0px)',
               whiteSpace: 'nowrap',
             }}
           >

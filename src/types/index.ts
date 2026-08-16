@@ -165,6 +165,8 @@ export interface FeedbackWidgetProps {
   mobileCollapse?: boolean;
   /** Force launcher to display as an icon-only button on all screen sizes */
   iconOnly?: boolean;
+  /** Corner radius style. Defaults to 'inherit' which respects host --radius or sharp 0px */
+  corners?: 'sharp' | 'rounded' | 'inherit';
 }
 
 export type EngageWidgetProps = FeedbackWidgetProps;

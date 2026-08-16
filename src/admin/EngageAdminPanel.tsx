@@ -289,7 +289,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
         backgroundColor: 'var(--background, #ffffff)',
         color: 'var(--foreground, #0f172a)',
         border: '1px solid var(--card-border, #e2e8f0)',
-        borderRadius: '12px',
+        borderRadius: 'var(--radius, 0px)',
         overflow: 'hidden',
         fontFamily: 'sans-serif',
       }}
@@ -317,7 +317,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
               fontSize: 11,
               background: 'var(--muted-bg, #e2e8f0)',
               padding: '2px 8px',
-              borderRadius: 12,
+              borderRadius: 'var(--radius-sm, 0px)',
               color: 'var(--muted, #64748b)',
             }}
           >
@@ -326,12 +326,12 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
         </div>
 
         {/* Navigation Tabs */}
-        <div className="rfw-admin-tabs" style={{ display: 'flex', gap: 6, background: 'var(--muted-bg, #e2e8f0)', padding: 4, borderRadius: 8, flexWrap: 'wrap' }}>
+        <div className="rfw-admin-tabs" style={{ display: 'flex', gap: 6, background: 'var(--muted-bg, #e2e8f0)', padding: 4, borderRadius: 'var(--radius, 0px)', flexWrap: 'wrap' }}>
           <button
             onClick={() => setActiveTab('inbox')}
             style={{
               padding: '6px 14px',
-              borderRadius: 6,
+              borderRadius: 'var(--radius-sm, 0px)',
               border: 'none',
               fontSize: 13,
               fontWeight: 500,
@@ -346,7 +346,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
             <Inbox size={14} />
             <span className="rfw-tab-text">Support Inbox</span>
             {tickets.length > 0 && (
-              <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 10, background: 'rgba(255,255,255,0.25)' }}>
+              <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 'var(--radius-sm, 0px)', background: 'rgba(255,255,255,0.25)' }}>
                 {tickets.length}
               </span>
             )}
@@ -356,7 +356,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
             onClick={() => setActiveTab('newsletter')}
             style={{
               padding: '6px 14px',
-              borderRadius: 6,
+              borderRadius: 'var(--radius-sm, 0px)',
               border: 'none',
               fontSize: 13,
               fontWeight: 500,
@@ -376,7 +376,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
             onClick={() => setActiveTab('templates')}
             style={{
               padding: '6px 14px',
-              borderRadius: 6,
+              borderRadius: 'var(--radius-sm, 0px)',
               border: 'none',
               fontSize: 13,
               fontWeight: 500,
@@ -430,7 +430,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                     background: 'var(--card-bg, #ffffff)',
                     color: 'var(--foreground, #0f172a)',
                     border: '1px solid var(--card-border, #cbd5e1)',
-                    borderRadius: 6,
+                    borderRadius: 'var(--radius-sm, 0px)',
                     padding: '4px 8px',
                     fontSize: 12,
                   }}
@@ -449,7 +449,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                     background: 'var(--card-bg, #ffffff)',
                     border: '1px solid var(--card-border, #cbd5e1)',
                     color: 'var(--muted, #64748b)',
-                    borderRadius: 6,
+                    borderRadius: 'var(--radius-sm, 0px)',
                     padding: '4px 8px',
                     cursor: 'pointer',
                   }}
@@ -484,7 +484,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                             fontWeight: 700,
                             textTransform: 'uppercase',
                             padding: '2px 6px',
-                            borderRadius: 4,
+                            borderRadius: 'var(--radius-sm, 0px)',
                             backgroundColor:
                               t.type === 'bug'
                                 ? 'rgba(239, 68, 68, 0.15)'
@@ -545,7 +545,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                       style={{
                         fontSize: 12,
                         padding: '4px 10px',
-                        borderRadius: 12,
+                        borderRadius: 'var(--radius-sm, 0px)',
                         background: selectedTicket.status === 'resolved' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(234, 179, 8, 0.15)',
                         color: selectedTicket.status === 'resolved' ? '#059669' : '#d97706',
                         fontWeight: 600,
@@ -560,7 +560,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                     <div
                       style={{
                         padding: 12,
-                        borderRadius: 8,
+                        borderRadius: 'var(--radius, 0px)',
                         backgroundColor: 'var(--card-bg, #f8fafc)',
                         border: '1px solid var(--card-border, #e2e8f0)',
                         fontSize: 12,
@@ -590,7 +590,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                   <div
                     style={{
                       padding: 16,
-                      borderRadius: 8,
+                      borderRadius: 'var(--radius, 0px)',
                       backgroundColor: 'var(--card-bg, #ffffff)',
                       border: '1px solid var(--card-border, #e2e8f0)',
                       color: 'var(--foreground, #0f172a)',
@@ -635,7 +635,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                               key={i}
                               style={{
                                 padding: 10,
-                                borderRadius: 8,
+                                borderRadius: 'var(--radius, 0px)',
                                 border: '1px solid var(--card-border, #e2e8f0)',
                                 backgroundColor: 'var(--card-bg, #ffffff)',
                                 display: 'flex',
@@ -648,7 +648,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                                   style={{
                                     width: '100%',
                                     height: 120,
-                                    borderRadius: 6,
+                                    borderRadius: 'var(--radius-sm, 0px)',
                                     overflow: 'hidden',
                                     backgroundColor: 'rgba(0, 0, 0, 0.05)',
                                     cursor: 'pointer',
@@ -705,7 +705,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                                     rel="noreferrer"
                                     style={{
                                       padding: '4px 8px',
-                                      borderRadius: 6,
+                                      borderRadius: 'var(--radius-sm, 0px)',
                                       border: '1px solid var(--card-border, #e2e8f0)',
                                       color: 'var(--accent, #3b82f6)',
                                       display: 'inline-flex',
@@ -738,7 +738,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                       <div
                         style={{
                           padding: '8px 12px',
-                          borderRadius: 6,
+                          borderRadius: 'var(--radius-sm, 0px)',
                           fontSize: 12,
                           marginBottom: 8,
                           backgroundColor: replyStatus.includes('successfully')
@@ -759,7 +759,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                         height: 100,
                         backgroundColor: 'var(--card-bg, #ffffff)',
                         border: '1px solid var(--card-border, #cbd5e1)',
-                        borderRadius: 8,
+                        borderRadius: 'var(--radius, 0px)',
                         padding: 12,
                         color: 'var(--foreground, #0f172a)',
                         fontSize: 13,
@@ -774,7 +774,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                         disabled={isSendingReply || !replyText.trim() || !selectedTicket.userEmail}
                         style={{
                           padding: '8px 18px',
-                          borderRadius: 6,
+                          borderRadius: 'var(--radius-sm, 0px)',
                           backgroundColor: 'var(--accent, #3b82f6)',
                           color: '#ffffff',
                           border: 'none',
@@ -816,7 +816,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                   onClick={() => handleTemplateChange(tmpl.id)}
                   style={{
                     padding: '10px 12px',
-                    borderRadius: 8,
+                    borderRadius: 'var(--radius, 0px)',
                     marginBottom: 8,
                     cursor: 'pointer',
                     fontSize: 13,
@@ -840,7 +840,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                   onClick={handleSaveTemplate}
                   style={{
                     padding: '8px 16px',
-                    borderRadius: 6,
+                    borderRadius: 'var(--radius-sm, 0px)',
                     backgroundColor: '#10b981',
                     color: '#ffffff',
                     border: 'none',
@@ -854,7 +854,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
               </div>
 
               {templateStatus && (
-                <div style={{ padding: '6px 12px', background: 'rgba(16,185,129,0.15)', color: '#059669', borderRadius: 6, fontSize: 12, marginBottom: 10 }}>
+                <div style={{ padding: '6px 12px', background: 'rgba(16,185,129,0.15)', color: '#059669', borderRadius: 'var(--radius-sm, 0px)', fontSize: 12, marginBottom: 10 }}>
                   {templateStatus}
                 </div>
               )}
@@ -872,7 +872,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                     padding: '8px 12px',
                     backgroundColor: 'var(--card-bg, #ffffff)',
                     border: '1px solid var(--card-border, #cbd5e1)',
-                    borderRadius: 6,
+                    borderRadius: 'var(--radius-sm, 0px)',
                     color: 'var(--foreground, #0f172a)',
                     fontSize: 13,
                   }}
@@ -891,7 +891,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                       flex: 1,
                       backgroundColor: 'var(--muted-bg, #f8fafc)',
                       border: '1px solid var(--card-border, #cbd5e1)',
-                      borderRadius: 8,
+                      borderRadius: 'var(--radius, 0px)',
                       padding: 12,
                       color: 'var(--foreground, #0f172a)',
                       fontFamily: 'monospace',
@@ -910,7 +910,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                     style={{
                       flex: 1,
                       backgroundColor: '#ffffff',
-                      borderRadius: 8,
+                      borderRadius: 'var(--radius, 0px)',
                       padding: 16,
                       overflowY: 'auto',
                       border: '1px solid var(--card-border, #cbd5e1)',
@@ -940,7 +940,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                 gap: 4,
                 backgroundColor: 'var(--muted-bg, #f1f5f9)',
                 padding: 4,
-                borderRadius: 8,
+                borderRadius: 'var(--radius, 0px)',
                 marginBottom: 24,
               }}
             >
@@ -949,7 +949,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                 onClick={() => setAudienceSubTab('broadcast')}
                 style={{
                   padding: '7px 16px',
-                  borderRadius: 6,
+                  borderRadius: 'var(--radius-sm, 0px)',
                   border: 'none',
                   fontSize: 13,
                   fontWeight: 600,
@@ -971,7 +971,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                 onClick={() => setAudienceSubTab('subscribers')}
                 style={{
                   padding: '7px 16px',
-                  borderRadius: 6,
+                  borderRadius: 'var(--radius-sm, 0px)',
                   border: 'none',
                   fontSize: 13,
                   fontWeight: 600,
@@ -993,7 +993,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                 onClick={() => setAudienceSubTab('history')}
                 style={{
                   padding: '7px 16px',
-                  borderRadius: 6,
+                  borderRadius: 'var(--radius-sm, 0px)',
                   border: 'none',
                   fontSize: 13,
                   fontWeight: 600,
@@ -1025,7 +1025,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                 <div
                   style={{
                     padding: 14,
-                    borderRadius: 8,
+                    borderRadius: 'var(--radius, 0px)',
                     backgroundColor: 'var(--muted-bg, #f8fafc)',
                     border: '1px solid var(--card-border, #e2e8f0)',
                     marginBottom: 20,
@@ -1062,7 +1062,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                               style={{
                                 fontSize: 11,
                                 padding: '3px 8px',
-                                borderRadius: 12,
+                                borderRadius: 'var(--radius-sm, 0px)',
                                 backgroundColor: 'var(--card-bg, #ffffff)',
                                 border: '1px solid var(--card-border, #cbd5e1)',
                                 color: 'var(--foreground, #0f172a)',
@@ -1080,7 +1080,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                                 fontSize: 11,
                                 fontWeight: 600,
                                 padding: '3px 10px',
-                                borderRadius: 12,
+                                borderRadius: 'var(--radius-sm, 0px)',
                                 backgroundColor: 'var(--accent, #3b82f6)',
                                 color: '#ffffff',
                                 border: 'none',
@@ -1097,7 +1097,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                 </div>
 
                 {broadcastStatus && (
-                  <div style={{ padding: 10, borderRadius: 6, background: 'rgba(16,185,129,0.15)', color: '#059669', fontSize: 13, marginBottom: 16 }}>
+                  <div style={{ padding: 10, borderRadius: 'var(--radius-sm, 0px)', background: 'rgba(16,185,129,0.15)', color: '#059669', fontSize: 13, marginBottom: 16 }}>
                     {broadcastStatus}
                   </div>
                 )}
@@ -1117,7 +1117,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                         padding: '10px 14px',
                         backgroundColor: 'var(--card-bg, #ffffff)',
                         border: '1px solid var(--card-border, #cbd5e1)',
-                        borderRadius: 8,
+                        borderRadius: 'var(--radius, 0px)',
                         color: 'var(--foreground, #0f172a)',
                         fontSize: 14,
                       }}
@@ -1138,7 +1138,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                         height: 180,
                         backgroundColor: 'var(--card-bg, #ffffff)',
                         border: '1px solid var(--card-border, #cbd5e1)',
-                        borderRadius: 8,
+                        borderRadius: 'var(--radius, 0px)',
                         padding: 14,
                         color: 'var(--foreground, #0f172a)',
                         fontSize: 14,
@@ -1154,7 +1154,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                     disabled={isSendingBroadcast}
                     style={{
                       padding: '12px 24px',
-                      borderRadius: 8,
+                      borderRadius: 'var(--radius, 0px)',
                       backgroundColor: '#10b981',
                       color: '#ffffff',
                       border: 'none',
@@ -1202,7 +1202,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                     }}
                     style={{
                       padding: '8px 16px',
-                      borderRadius: 6,
+                      borderRadius: 'var(--radius-sm, 0px)',
                       backgroundColor: 'var(--accent, #3b82f6)',
                       color: '#ffffff',
                       border: 'none',
@@ -1230,7 +1230,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                     style={{
                       width: '100%',
                       padding: '8px 12px 8px 36px',
-                      borderRadius: 6,
+                      borderRadius: 'var(--radius-sm, 0px)',
                       border: '1px solid var(--card-border, #cbd5e1)',
                       backgroundColor: 'var(--card-bg, #ffffff)',
                       color: 'var(--foreground, #0f172a)',
@@ -1244,7 +1244,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                   style={{
                     backgroundColor: 'var(--card-bg, #ffffff)',
                     border: '1px solid var(--card-border, #cbd5e1)',
-                    borderRadius: 8,
+                    borderRadius: 'var(--radius, 0px)',
                     overflow: 'hidden',
                   }}
                 >
@@ -1284,7 +1284,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                                   style={{
                                     fontSize: 11,
                                     padding: '2px 8px',
-                                    borderRadius: 10,
+                                    borderRadius: 'var(--radius-sm, 0px)',
                                     backgroundColor: sub.status === 'Unsubscribed' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
                                     color: sub.status === 'Unsubscribed' ? '#dc2626' : '#059669',
                                     fontWeight: 600,
@@ -1319,7 +1319,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                   style={{
                     backgroundColor: 'var(--card-bg, #ffffff)',
                     border: '1px solid var(--card-border, #cbd5e1)',
-                    borderRadius: 8,
+                    borderRadius: 'var(--radius, 0px)',
                     overflow: 'hidden',
                   }}
                 >
@@ -1412,7 +1412,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
               style={{
                 maxWidth: '100%',
                 maxHeight: '85vh',
-                borderRadius: 8,
+                borderRadius: 'var(--radius, 0px)',
                 boxShadow: '0 20px 25px -5px rgba(0,0,0,0.5)',
                 objectFit: 'contain',
               }}
