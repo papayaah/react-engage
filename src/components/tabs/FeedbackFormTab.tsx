@@ -7,9 +7,11 @@ import {
   SuggestionCategory,
   WidgetUser,
   Attachment,
+  EngageWidgetContent,
 } from '../../types';
 import { useEnvironmentMeta } from '../../hooks/useEnvironmentMeta';
 import { CheckCircle2, AlertCircle, Paperclip, X, Bug, Lightbulb, LifeBuoy, Inbox } from 'lucide-react';
+import { DEFAULT_ENGAGE_CONTENT, interpolateContent } from '../../content';
 
 export type FeedbackCategory = 'bug' | 'suggestion' | 'support';
 
@@ -22,6 +24,7 @@ interface FeedbackFormTabProps {
   onSubmitSuggestion: (payload: SuggestionPayload) => Promise<void> | void;
   onSubmitTicket: (payload: TicketPayload) => Promise<void> | void;
   onViewTickets?: () => void;
+  content?: EngageWidgetContent['feedback'];
 }
 
 export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
@@ -33,6 +36,7 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
   onSubmitSuggestion,
   onSubmitTicket,
   onViewTickets,
+  content = DEFAULT_ENGAGE_CONTENT.feedback,
 }) => {
   const envMeta = useEnvironmentMeta(themeMode);
 
@@ -84,16 +88,16 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
     // Bug / Suggestion require at least a title or message.
     if (category === 'support') {
       if (!email.trim() || !email.includes('@')) {
-        setErrorMsg('Please provide a valid email address so our support team can reply.');
+        setErrorMsg(content.validation.invalidEmail);
         return;
       }
       if (!message.trim()) {
-        setErrorMsg('Please enter your support message.');
+        setErrorMsg(content.validation.missingSupportMessage);
         return;
       }
     } else {
       if (!title.trim() && !message.trim()) {
-        setErrorMsg('Please fill in a brief summary or description.');
+        setErrorMsg(content.validation.missingSummary);
         return;
       }
     }
@@ -104,7 +108,7 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
       if (category === 'bug') {
         const payload: BugReportPayload = {
           appId,
-          title: title.trim() || 'Bug Report',
+          title: title.trim() || content.payloadDefaults.bugTitle,
           description: message.trim() || title.trim(),
           severity,
           user: { ...user, email: email || user?.email },
@@ -115,7 +119,7 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
       } else if (category === 'suggestion') {
         const payload: SuggestionPayload = {
           appId,
-          title: title.trim() || 'Feature Suggestion',
+          title: title.trim() || content.payloadDefaults.suggestionTitle,
           category: suggestionType,
           description: message.trim() || title.trim(),
           user: { ...user, email: email || user?.email },
@@ -125,7 +129,7 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
       } else if (category === 'support') {
         const payload: TicketPayload = {
           appId,
-          subject: title.trim() || 'Support Request',
+          subject: title.trim() || content.payloadDefaults.supportSubject,
           message: message.trim(),
           user: { ...user, email },
           timestamp: new Date().toISOString(),
@@ -135,7 +139,7 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
 
       setIsSubmitted(true);
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : 'Failed to submit feedback');
+      setErrorMsg(err instanceof Error ? err.message : content.errors.submitFailed);
     } finally {
       setIsSubmitting(false);
     }
@@ -165,20 +169,20 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
         </div>
         <h3 style={{ margin: 0, fontSize: 18, color: 'var(--rfw-fg)' }}>
           {category === 'bug'
-            ? 'Bug Report Received!'
+            ? content.success.bugTitle
             : category === 'suggestion'
-            ? 'Idea Submitted!'
-            : 'Support Ticket Received!'}
+            ? content.success.suggestionTitle
+            : content.success.supportTitle}
         </h3>
         <p style={{ margin: 0, fontSize: 14, color: 'var(--rfw-muted)' }}>
           {category === 'support'
-            ? 'Thank you for reaching out. We will respond to your email shortly.'
-            : 'Thank you for your feedback! We will review this to improve the app.'}
+            ? content.success.supportMessage
+            : content.success.feedbackMessage}
         </p>
         <div className="rfw-success-actions">
           {onViewTickets ? (
             <button type="button" className="rfw-btn-submit" onClick={onViewTickets}>
-              View My Tickets
+              {content.success.viewTicketsButton}
             </button>
           ) : null}
           <button
@@ -191,7 +195,7 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
               setAttachments([]);
             }}
           >
-            Submit More Feedback
+            {content.success.submitMoreButton}
           </button>
         </div>
       </div>
@@ -209,7 +213,7 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
           onClick={() => { setCategory('bug'); setErrorMsg(null); }}
         >
           <Bug size={13} />
-          <span>Bug</span>
+          <span>{content.categories.bug}</span>
         </button>
 
         <button
@@ -219,7 +223,7 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
           onClick={() => { setCategory('suggestion'); setErrorMsg(null); }}
         >
           <Lightbulb size={13} />
-          <span>Suggestion</span>
+          <span>{content.categories.suggestion}</span>
         </button>
 
         <button
@@ -229,7 +233,7 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
           onClick={() => { setCategory('support'); setErrorMsg(null); }}
         >
           <LifeBuoy size={13} />
-          <span>Support</span>
+          <span>{content.categories.support}</span>
         </button>
 
         {onViewTickets ? (
@@ -237,8 +241,8 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
             type="button"
             className="rfw-mini-btn rfw-mini-btn-icon"
             onClick={onViewTickets}
-            aria-label="View my tickets"
-            title="My tickets"
+            aria-label={content.viewTicketsLabel}
+            title={content.myTicketsLabel}
           >
             <Inbox size={14} />
           </button>
@@ -268,22 +272,12 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
       {/* Dynamic Summary/Subject Field */}
       <div className="rfw-field">
         <label className="rfw-label">
-          {category === 'bug'
-            ? 'Issue Summary (Optional)'
-            : category === 'suggestion'
-            ? 'Idea Summary (Optional)'
-            : 'Subject (Optional)'}
+          {content.summaryLabels[category]}
         </label>
         <input
           type="text"
           className="rfw-input"
-          placeholder={
-            category === 'bug'
-              ? 'e.g. Chart failed to render after date change'
-              : category === 'suggestion'
-              ? 'e.g. Add dark mode option for charts'
-              : 'e.g. Question about my account'
-          }
+          placeholder={content.summaryPlaceholders[category]}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
@@ -292,33 +286,33 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
       {/* Category Specific Dropdown */}
       {category === 'bug' && (
         <div className="rfw-field">
-          <label className="rfw-label">Severity (Optional)</label>
+          <label className="rfw-label">{content.severityLabel}</label>
           <select
             className="rfw-select"
             value={severity}
             onChange={(e) => setSeverity(e.target.value as BugSeverity)}
           >
-            <option value="low">Low - Visual tweak or typo</option>
-            <option value="medium">Medium - Workflow affected</option>
-            <option value="high">High - Feature broken</option>
-            <option value="critical">Critical - App crash</option>
+            <option value="low">{content.severityOptions.low}</option>
+            <option value="medium">{content.severityOptions.medium}</option>
+            <option value="high">{content.severityOptions.high}</option>
+            <option value="critical">{content.severityOptions.critical}</option>
           </select>
         </div>
       )}
 
       {category === 'suggestion' && (
         <div className="rfw-field">
-          <label className="rfw-label">Topic (Optional)</label>
+          <label className="rfw-label">{content.suggestionTopicLabel}</label>
           <select
             className="rfw-select"
             value={suggestionType}
             onChange={(e) => setSuggestionType(e.target.value as SuggestionCategory)}
           >
-            <option value="new_feature">New Feature</option>
-            <option value="ui_ux">UI / UX Enhancement</option>
-            <option value="performance">Performance</option>
-            <option value="integrations">Integrations</option>
-            <option value="other">Other Idea</option>
+            <option value="new_feature">{content.suggestionTopicOptions.new_feature}</option>
+            <option value="ui_ux">{content.suggestionTopicOptions.ui_ux}</option>
+            <option value="performance">{content.suggestionTopicOptions.performance}</option>
+            <option value="integrations">{content.suggestionTopicOptions.integrations}</option>
+            <option value="other">{content.suggestionTopicOptions.other}</option>
           </select>
         </div>
       )}
@@ -326,17 +320,11 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
       {/* Message / Description Area */}
       <div className="rfw-field">
         <label className="rfw-label">
-          {category === 'support' ? 'Your Message *' : 'Details / Description'}
+          {category === 'support' ? content.messageLabels.support : content.messageLabels.feedback}
         </label>
         <textarea
           className="rfw-textarea"
-          placeholder={
-            category === 'bug'
-              ? 'Describe what happened or steps to reproduce...'
-              : category === 'suggestion'
-              ? 'What problem does this idea solve?'
-              : 'How can our team help you?'
-          }
+          placeholder={content.messagePlaceholders[category]}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           required={category === 'support'}
@@ -346,12 +334,12 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
       {/* Email Field - Required for Support, Optional for Bug & Suggestion */}
       <div className="rfw-field">
         <label className="rfw-label">
-          {category === 'support' ? 'Your Email *' : 'Your Email (Optional)'}
+          {category === 'support' ? content.emailLabels.required : content.emailLabels.optional}
         </label>
         <input
           type="email"
           className="rfw-input"
-          placeholder="name@example.com"
+          placeholder={content.emailPlaceholder}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required={category === 'support'}
@@ -361,7 +349,7 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
       {/* Optional Attachments for Bug & Support */}
       {category !== 'suggestion' && (
         <div className="rfw-field">
-          <label className="rfw-label">Attachments (Optional)</label>
+          <label className="rfw-label">{content.attachmentsLabel}</label>
           <label
             style={{
               display: 'flex',
@@ -378,7 +366,7 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
             }}
           >
             <Paperclip size={14} />
-            <span>Attach screenshot or log</span>
+            <span>{content.attachmentAction}</span>
             <input
               type="file"
               accept="image/*,.log,.json"
@@ -415,18 +403,22 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
       {/* Auto Telemetry Notice for Bugs */}
       {category === 'bug' && (
         <div style={{ fontSize: 11, color: 'var(--rfw-muted)', marginBottom: 12 }}>
-          Auto-attaching URL ({envMeta.path}), browser ({envMeta.browser}), and OS ({envMeta.os}).
+          {interpolateContent(content.telemetryNotice, {
+            path: envMeta.path,
+            browser: envMeta.browser,
+            os: envMeta.os,
+          })}
         </div>
       )}
 
       <button type="submit" className="rfw-btn-submit" disabled={isSubmitting}>
         {isSubmitting
-          ? 'Submitting...'
+          ? content.submitButtons.submitting
           : category === 'bug'
-          ? 'Submit Bug Report'
+          ? content.submitButtons.bug
           : category === 'suggestion'
-          ? 'Submit Suggestion'
-          : 'Send Support Request'}
+          ? content.submitButtons.suggestion
+          : content.submitButtons.support}
       </button>
     </form>
   );

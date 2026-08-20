@@ -42,23 +42,21 @@ export interface EngageAdminPanelProps {
   onSaveTemplate?: (template: EmailTemplate) => Promise<void>;
   /** Custom handler when admin dispatches a newsletter broadcast */
   onSendBroadcast?: (subject: string, bodyContent: string) => Promise<void>;
+  /** Host-owned starting templates. Defaults are deliberately product-neutral. */
+  initialTemplates?: EmailTemplate[];
+  /** Host-owned initial newsletter subject. */
+  initialBroadcastSubject?: string;
 }
 
 const DEFAULT_TEMPLATES: EmailTemplate[] = [
   {
     id: 'welcome',
     name: 'Welcome Email (New Signup)',
-    subject: 'Welcome to Trading Diary!',
+    subject: 'Welcome!',
     htmlContent: `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
   <h2 style="color: #3b82f6;">Welcome aboard, {{user_name}}! 🎉</h2>
-  <p>Thank you for joining Trading Diary. We are excited to help you track, analyze, and elevate your trading journey.</p>
-  <p>To get started quickly:</p>
-  <ul>
-    <li>Import your trade executions from your broker CSV</li>
-    <li>Set up your risk rules and trade tags</li>
-    <li>Use the floating feedback widget anytime you have questions</li>
-  </ul>
-  <p style="color: #64748b; font-size: 13px; margin-top: 24px;">Happy Trading,<br />The Trading Diary Team</p>
+  <p>Thank you for joining us. We are excited to have you here.</p>
+  <p style="color: #64748b; font-size: 13px; margin-top: 24px;">The Support Team</p>
 </div>`,
   },
   {
@@ -77,9 +75,9 @@ const DEFAULT_TEMPLATES: EmailTemplate[] = [
   {
     id: 'newsletter',
     name: 'Product Update / Newsletter',
-    subject: '🚀 What’s New in Trading Diary - Feature Digest',
+    subject: '🚀 Product Updates - Feature Digest',
     htmlContent: `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-  <h2 style="color: #10b981; margin-top: 0;">Trading Diary Updates 🚀</h2>
+  <h2 style="color: #10b981; margin-top: 0;">Product Updates 🚀</h2>
   <p>Here is what we shipped this week based on your feedback:</p>
   <div style="background: #f1f5f9; padding: 14px; border-radius: 6px; font-size: 14px; margin: 16px 0;">
     {{broadcast_content}}
@@ -95,6 +93,8 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
   onSendReply,
   onSaveTemplate,
   onSendBroadcast,
+  initialTemplates = DEFAULT_TEMPLATES,
+  initialBroadcastSubject = 'New Product Updates',
 }) => {
   const [activeTab, setActiveTab] = useState<'inbox' | 'templates' | 'newsletter'>(defaultTab as any);
   const [audienceSubTab, setAudienceSubTab] = useState<'broadcast' | 'subscribers' | 'history'>('broadcast');
@@ -108,14 +108,15 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
   const [replyStatus, setReplyStatus] = useState<string | null>(null);
 
   // Template state
-  const [templates, setTemplates] = useState<EmailTemplate[]>(DEFAULT_TEMPLATES);
+  const startingTemplates = initialTemplates.length > 0 ? initialTemplates : DEFAULT_TEMPLATES;
+  const [templates, setTemplates] = useState<EmailTemplate[]>(startingTemplates);
   const [selectedTemplateId, setSelectedTemplateId] = useState<'welcome' | 'ticket_reply' | 'newsletter'>('welcome');
-  const [editSubject, setEditSubject] = useState(DEFAULT_TEMPLATES[0].subject);
-  const [editHtml, setEditHtml] = useState(DEFAULT_TEMPLATES[0].htmlContent);
+  const [editSubject, setEditSubject] = useState(startingTemplates[0].subject);
+  const [editHtml, setEditHtml] = useState(startingTemplates[0].htmlContent);
   const [templateStatus, setTemplateStatus] = useState<string | null>(null);
 
   // Broadcast state
-  const [broadcastSubject, setBroadcastSubject] = useState('New Product Updates');
+  const [broadcastSubject, setBroadcastSubject] = useState(initialBroadcastSubject);
   const [broadcastBody, setBroadcastBody] = useState('');
   const [isSendingBroadcast, setIsSendingBroadcast] = useState(false);
   const [broadcastStatus, setBroadcastStatus] = useState<string | null>(null);
@@ -785,8 +786,8 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                     dangerouslySetInnerHTML={{
                       __html: editHtml
                         .replace(/\{\{user_name\}\}/g, 'Alex')
-                        .replace(/\{\{ticket_subject\}\}/g, 'IBKR Sync')
-                        .replace(/\{\{reply_text\}\}/g, 'We have resolved the sync issue in v0.2.0.')
+                        .replace(/\{\{ticket_subject\}\}/g, 'Account Sync')
+                        .replace(/\{\{reply_text\}\}/g, 'We have resolved the reported issue.')
                         .replace(/\{\{broadcast_content\}\}/g, 'New custom dashboards & dark mode contrast improvements.'),
                     }}
                   />
@@ -977,7 +978,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                       type="text"
                       value={broadcastSubject}
                       onChange={(e) => setBroadcastSubject(e.target.value)}
-                      placeholder="e.g. 🚀 What's new in Trading Diary v0.2.0"
+                    placeholder="e.g. 🚀 What's new in this release"
                       style={{
                         width: '100%',
                         padding: '10px 14px',
@@ -1230,4 +1231,3 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
     </div>
   );
 };
-

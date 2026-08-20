@@ -44,16 +44,77 @@ export default function App() {
       theme="inherit"
       endpointUrl="/api/engage"
       user={session?.user}
+      content={{
+        launcher: { title: 'Help Center' },
+        faq: {
+          items: [
+            {
+              id: 'getting-started',
+              question: 'How do I get started?',
+              answer: 'Create your first project from the dashboard.',
+              category: 'Getting Started',
+              externalUrl: '/docs/getting-started',
+            },
+          ],
+        },
+        newsletter: {
+          subscribeDescription: 'Get product release notes by email.',
+        },
+      }}
     />
   );
 }
 ```
+
+## Host-owned content
+
+`react-engage` owns interaction and presentation; the host application owns its
+product help and language. Pass a partial `content` object to customize any
+end-user string. Overrides are deep-merged with product-neutral defaults, so an
+app may replace one label or the complete catalog.
+
+The typed `EngageWidgetContent` contract covers:
+
+- launcher, drawer accessibility labels, and navigation tabs
+- FAQ items, search, empty state, categories, and article links
+- bug, suggestion, and support form labels, placeholders, validation, success,
+  payload fallback titles, option labels, and buttons
+- ticket list labels, loading/errors, empty states, and reply text
+- newsletter form, confirmation states, frequency options, and actions
+
+Dynamic values use named tokens where documented by the default content:
+`{path}`, `{browser}`, `{os}`, and `{email}`. `faqs` and the flat `labels` prop
+remain supported for compatibility; new integrations should prefer `content`.
+
+```tsx
+import type { EngageWidgetContentOverrides } from '@reactkits.dev/react-engage';
+
+export const engageContent = {
+  tabs: { faq: 'Guides' },
+  feedback: {
+    summaryPlaceholders: {
+      bug: 'e.g. The invoice preview is blank',
+    },
+  },
+} satisfies EngageWidgetContentOverrides;
+```
+
+If help articles come from a CMS, fetch them in the host application and pass
+the resulting array as `content.faq.items`. The package does not impose a CMS or
+store domain documentation in its own database.
 
 ## Core Exports
 
 - `EngageWidget`: Floating engagement widget for users.
 - `EngageAdminPanel`: In-app admin dashboard for managing broadcasts, subscribers, and feedback.
 - `@reactkits.dev/react-engage/server`: Next.js route handler factory (`createEngageRouteHandler`).
+
+`EngageAdminPanel` also accepts host-owned `initialTemplates` and
+`initialBroadcastSubject`. Server notification identity remains configurable
+through `adminEmail`, `senderEmail`, and `senderName` on
+`createEngageRouteHandler`. Its `emailContent` option accepts host renderers for
+welcome, admin-notification, and newsletter-broadcast emails, so no product
+identity or email copy needs to live in the reusable server package.
 
 The `My Tickets` endpoint is authenticated by the host application. Configure
 `resolveRequestUser` on `createEngageRouteHandler` and return the current user's

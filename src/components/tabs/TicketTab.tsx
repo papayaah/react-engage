@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { TicketPayload, WidgetUser } from '../../types';
+import { TicketPayload, WidgetUser, EngageWidgetContent } from '../../types';
 import { AlertCircle, LifeBuoy } from 'lucide-react';
+import { DEFAULT_ENGAGE_CONTENT } from '../../content';
 
 interface TicketTabProps {
   appId: string;
   user?: WidgetUser;
   onSubmit: (payload: TicketPayload) => Promise<void> | void;
+  content?: EngageWidgetContent['feedback'];
 }
 
-export const TicketTab: React.FC<TicketTabProps> = ({ appId, user, onSubmit }) => {
+export const TicketTab: React.FC<TicketTabProps> = ({ appId, user, onSubmit, content = DEFAULT_ENGAGE_CONTENT.feedback }) => {
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [email, setEmail] = useState(user?.email || '');
@@ -19,7 +21,7 @@ export const TicketTab: React.FC<TicketTabProps> = ({ appId, user, onSubmit }) =
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!subject.trim() || !message.trim()) {
-      setErrorMsg('Please enter a subject and message.');
+      setErrorMsg(content.validation.missingSupportMessage);
       return;
     }
 
@@ -41,7 +43,7 @@ export const TicketTab: React.FC<TicketTabProps> = ({ appId, user, onSubmit }) =
       await onSubmit(payload);
       setIsSubmitted(true);
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : 'Failed to submit ticket');
+      setErrorMsg(err instanceof Error ? err.message : content.errors.submitFailed);
     } finally {
       setIsSubmitting(false);
     }
@@ -53,9 +55,9 @@ export const TicketTab: React.FC<TicketTabProps> = ({ appId, user, onSubmit }) =
         <div className="rfw-success-icon" style={{ backgroundColor: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6' }}>
           <LifeBuoy size={28} />
         </div>
-        <h3 style={{ margin: 0, fontSize: 18, color: 'var(--rfw-fg)' }}>Ticket Opened!</h3>
+        <h3 style={{ margin: 0, fontSize: 18, color: 'var(--rfw-fg)' }}>{content.success.supportTitle}</h3>
         <p style={{ margin: 0, fontSize: 14, color: 'var(--rfw-muted)' }}>
-          Your support request has been logged. We will get back to you via email shortly.
+          {content.success.supportMessage}
         </p>
         <button
           className="rfw-btn-submit"
@@ -66,7 +68,7 @@ export const TicketTab: React.FC<TicketTabProps> = ({ appId, user, onSubmit }) =
             setMessage('');
           }}
         >
-          Send Another Message
+          {content.success.submitMoreButton}
         </button>
       </div>
     );
@@ -95,11 +97,11 @@ export const TicketTab: React.FC<TicketTabProps> = ({ appId, user, onSubmit }) =
       )}
 
       <div className="rfw-field">
-        <label className="rfw-label">Subject</label>
+        <label className="rfw-label">{content.summaryLabels.support}</label>
         <input
           type="text"
           className="rfw-input"
-          placeholder="e.g. Account billing or trade sync issue"
+          placeholder={content.summaryPlaceholders.support}
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
           required
@@ -107,11 +109,11 @@ export const TicketTab: React.FC<TicketTabProps> = ({ appId, user, onSubmit }) =
       </div>
 
       <div className="rfw-field">
-        <label className="rfw-label">Your Email</label>
+        <label className="rfw-label">{content.emailLabels.required}</label>
         <input
           type="email"
           className="rfw-input"
-          placeholder="name@example.com"
+          placeholder={content.emailPlaceholder}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -119,10 +121,10 @@ export const TicketTab: React.FC<TicketTabProps> = ({ appId, user, onSubmit }) =
       </div>
 
       <div className="rfw-field">
-        <label className="rfw-label">Message</label>
+        <label className="rfw-label">{content.messageLabels.support}</label>
         <textarea
           className="rfw-textarea"
-          placeholder="How can our support team assist you today?"
+          placeholder={content.messagePlaceholders.support}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           required
@@ -130,7 +132,7 @@ export const TicketTab: React.FC<TicketTabProps> = ({ appId, user, onSubmit }) =
       </div>
 
       <button type="submit" className="rfw-btn-submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Sending...' : 'Send Support Ticket'}
+        {isSubmitting ? content.submitButtons.submitting : content.submitButtons.support}
       </button>
     </form>
   );

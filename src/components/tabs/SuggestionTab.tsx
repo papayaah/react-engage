@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { SuggestionPayload, SuggestionCategory, WidgetUser } from '../../types';
+import { SuggestionPayload, SuggestionCategory, WidgetUser, EngageWidgetContent } from '../../types';
 import { AlertCircle, Lightbulb } from 'lucide-react';
+import { DEFAULT_ENGAGE_CONTENT } from '../../content';
 
 interface SuggestionTabProps {
   appId: string;
   user?: WidgetUser;
   onSubmit: (payload: SuggestionPayload) => Promise<void> | void;
+  content?: EngageWidgetContent['feedback'];
 }
 
-export const SuggestionTab: React.FC<SuggestionTabProps> = ({ appId, user, onSubmit }) => {
+export const SuggestionTab: React.FC<SuggestionTabProps> = ({ appId, user, onSubmit, content = DEFAULT_ENGAGE_CONTENT.feedback }) => {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<SuggestionCategory>('new_feature');
   const [description, setDescription] = useState('');
@@ -19,7 +21,7 @@ export const SuggestionTab: React.FC<SuggestionTabProps> = ({ appId, user, onSub
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !description.trim()) {
-      setErrorMsg('Please enter a title and description.');
+      setErrorMsg(content.validation.missingSummary);
       return;
     }
 
@@ -39,7 +41,7 @@ export const SuggestionTab: React.FC<SuggestionTabProps> = ({ appId, user, onSub
       await onSubmit(payload);
       setIsSubmitted(true);
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : 'Failed to submit suggestion');
+      setErrorMsg(err instanceof Error ? err.message : content.errors.submitFailed);
     } finally {
       setIsSubmitting(false);
     }
@@ -51,9 +53,9 @@ export const SuggestionTab: React.FC<SuggestionTabProps> = ({ appId, user, onSub
         <div className="rfw-success-icon" style={{ backgroundColor: 'rgba(234, 179, 8, 0.15)', color: '#eab308' }}>
           <Lightbulb size={28} />
         </div>
-        <h3 style={{ margin: 0, fontSize: 18, color: 'var(--rfw-fg)' }}>Idea Submitted!</h3>
+        <h3 style={{ margin: 0, fontSize: 18, color: 'var(--rfw-fg)' }}>{content.success.suggestionTitle}</h3>
         <p style={{ margin: 0, fontSize: 14, color: 'var(--rfw-muted)' }}>
-          We love feedback! Your feature suggestion has been recorded for roadmap consideration.
+          {content.success.feedbackMessage}
         </p>
         <button
           className="rfw-btn-submit"
@@ -64,7 +66,7 @@ export const SuggestionTab: React.FC<SuggestionTabProps> = ({ appId, user, onSub
             setDescription('');
           }}
         >
-          Submit Another Suggestion
+          {content.success.submitMoreButton}
         </button>
       </div>
     );
@@ -93,11 +95,11 @@ export const SuggestionTab: React.FC<SuggestionTabProps> = ({ appId, user, onSub
       )}
 
       <div className="rfw-field">
-        <label className="rfw-label">Idea Title</label>
+        <label className="rfw-label">{content.summaryLabels.suggestion}</label>
         <input
           type="text"
           className="rfw-input"
-          placeholder="e.g. Add dark mode option for charts"
+          placeholder={content.summaryPlaceholders.suggestion}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           required
@@ -105,25 +107,25 @@ export const SuggestionTab: React.FC<SuggestionTabProps> = ({ appId, user, onSub
       </div>
 
       <div className="rfw-field">
-        <label className="rfw-label">Category</label>
+        <label className="rfw-label">{content.suggestionTopicLabel}</label>
         <select
           className="rfw-select"
           value={category}
           onChange={(e) => setCategory(e.target.value as SuggestionCategory)}
         >
-          <option value="new_feature">New Feature</option>
-          <option value="ui_ux">UI / UX Enhancement</option>
-          <option value="performance">Performance Improvement</option>
-          <option value="integrations">Integration / API</option>
-          <option value="other">Other Idea</option>
+          <option value="new_feature">{content.suggestionTopicOptions.new_feature}</option>
+          <option value="ui_ux">{content.suggestionTopicOptions.ui_ux}</option>
+          <option value="performance">{content.suggestionTopicOptions.performance}</option>
+          <option value="integrations">{content.suggestionTopicOptions.integrations}</option>
+          <option value="other">{content.suggestionTopicOptions.other}</option>
         </select>
       </div>
 
       <div className="rfw-field">
-        <label className="rfw-label">Detailed Proposal</label>
+        <label className="rfw-label">{content.messageLabels.feedback}</label>
         <textarea
           className="rfw-textarea"
-          placeholder="How would this feature help you? What problem does it solve?"
+          placeholder={content.messagePlaceholders.suggestion}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           required
@@ -131,7 +133,7 @@ export const SuggestionTab: React.FC<SuggestionTabProps> = ({ appId, user, onSub
       </div>
 
       <button type="submit" className="rfw-btn-submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Submitting...' : 'Submit Suggestion'}
+        {isSubmitting ? content.submitButtons.submitting : content.submitButtons.suggestion}
       </button>
     </form>
   );

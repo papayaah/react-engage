@@ -1,16 +1,23 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { NewsletterPayload, WidgetUser } from '../../types';
+import { EngageWidgetContent, NewsletterPayload, WidgetUser } from '../../types';
 import { Mail, CheckCircle2, AlertCircle, UserMinus, RotateCcw } from 'lucide-react';
+import { DEFAULT_ENGAGE_CONTENT, interpolateContent } from '../../content';
 
 interface NewsletterTabProps {
   appId: string;
   user?: WidgetUser;
   onSubmit: (payload: NewsletterPayload) => Promise<void> | void;
+  content?: EngageWidgetContent['newsletter'];
 }
 
-export const NewsletterTab: React.FC<NewsletterTabProps> = ({ appId, user, onSubmit }) => {
+export const NewsletterTab: React.FC<NewsletterTabProps> = ({
+  appId,
+  user,
+  onSubmit,
+  content = DEFAULT_ENGAGE_CONTENT.newsletter,
+}) => {
   const [email, setEmail] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('engage_subscribed_email');
@@ -42,12 +49,12 @@ export const NewsletterTab: React.FC<NewsletterTabProps> = ({ appId, user, onSub
     if (user?.name && !name) {
       setName(user.name);
     }
-  }, [user]);
+  }, [name, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) {
-      setErrorMsg('Please enter a valid email address.');
+      setErrorMsg(content.validationEmail);
       return;
     }
 
@@ -75,7 +82,7 @@ export const NewsletterTab: React.FC<NewsletterTabProps> = ({ appId, user, onSub
       setShowManagePrefs(false);
       setIsUnsubscribed(false);
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : 'Failed to subscribe');
+      setErrorMsg(err instanceof Error ? err.message : content.subscribeError);
     } finally {
       setIsSubmitting(false);
     }
@@ -104,7 +111,7 @@ export const NewsletterTab: React.FC<NewsletterTabProps> = ({ appId, user, onSub
       setIsSubmitted(false);
       setShowManagePrefs(false);
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : 'Failed to unsubscribe');
+      setErrorMsg(err instanceof Error ? err.message : content.unsubscribeError);
     } finally {
       setIsSubmitting(false);
     }
@@ -117,9 +124,9 @@ export const NewsletterTab: React.FC<NewsletterTabProps> = ({ appId, user, onSub
         <div className="rfw-success-icon" style={{ backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', marginBottom: 12, padding: 12, borderRadius: '50%' }}>
           <UserMinus size={28} />
         </div>
-        <h3 style={{ margin: '0 0 6px 0', fontSize: 18, color: 'var(--rfw-fg)' }}>You've Unsubscribed</h3>
+        <h3 style={{ margin: '0 0 6px 0', fontSize: 18, color: 'var(--rfw-fg)' }}>{content.unsubscribedTitle}</h3>
         <p style={{ margin: '0 0 16px 0', fontSize: 14, color: 'var(--rfw-muted)', lineHeight: 1.4 }}>
-          You have been removed from our newsletter list ({email}). You will no longer receive product updates.
+          {interpolateContent(content.unsubscribedMessage, { email })}
         </p>
         <button
           className="rfw-btn-submit"
@@ -130,7 +137,7 @@ export const NewsletterTab: React.FC<NewsletterTabProps> = ({ appId, user, onSub
             setShowManagePrefs(false);
           }}
         >
-          Re-subscribe to Newsletter
+          {content.resubscribeButton}
         </button>
       </div>
     );
@@ -143,19 +150,19 @@ export const NewsletterTab: React.FC<NewsletterTabProps> = ({ appId, user, onSub
         <div className="rfw-success-icon" style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981', marginBottom: 12, padding: 12, borderRadius: '50%' }}>
           <CheckCircle2 size={28} />
         </div>
-        <h3 style={{ margin: '0 0 6px 0', fontSize: 18, color: 'var(--rfw-fg)' }}>You're Subscribed!</h3>
+        <h3 style={{ margin: '0 0 6px 0', fontSize: 18, color: 'var(--rfw-fg)' }}>{content.subscribedTitle}</h3>
         <p style={{ margin: '0 0 6px 0', fontSize: 14, color: 'var(--rfw-muted)', lineHeight: 1.4 }}>
-          Thank you for subscribing! Check your inbox for updates and product releases.
+          {content.subscribedMessage}
         </p>
         <div style={{ fontSize: 12, color: 'var(--rfw-accent)', fontWeight: 600, marginBottom: 16 }}>
-          Subscribed Email: {email}
+          {content.subscribedEmailLabel}: {email}
         </div>
         <button
           className="rfw-btn-submit"
           style={{ width: 'auto', padding: '8px 20px' }}
           onClick={() => setShowManagePrefs(true)}
         >
-          Manage Preferences
+          {content.manageButton}
         </button>
       </div>
     );
@@ -187,16 +194,16 @@ export const NewsletterTab: React.FC<NewsletterTabProps> = ({ appId, user, onSub
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, padding: '10px 12px', backgroundColor: 'var(--rfw-card-bg)', borderRadius: 8, border: '1px solid var(--rfw-card-border)' }}>
         <Mail size={22} style={{ color: 'var(--rfw-accent)', flexShrink: 0 }} />
         <div style={{ fontSize: 12, color: 'var(--rfw-fg)' }}>
-          <strong>{showManagePrefs ? 'Update Subscription Preferences' : 'Product Updates & Newsletter'}</strong>
+          <strong>{showManagePrefs ? content.manageTitle : content.subscribeTitle}</strong>
           <div style={{ color: 'var(--rfw-muted)', marginTop: 2 }}>
-            {showManagePrefs ? 'Modify frequency or unsubscribe from emails.' : 'Get new features, tips, and market insights straight to your inbox.'}
+            {showManagePrefs ? content.manageDescription : content.subscribeDescription}
           </div>
         </div>
       </div>
 
       <div className="rfw-field">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-          <label className="rfw-label" style={{ margin: 0 }}>Your Email</label>
+          <label className="rfw-label" style={{ margin: 0 }}>{content.emailLabel}</label>
           {user?.email && email !== user.email && (
             <button
               type="button"
@@ -213,14 +220,14 @@ export const NewsletterTab: React.FC<NewsletterTabProps> = ({ appId, user, onSub
                 padding: 0,
               }}
             >
-              <RotateCcw size={11} /> Use account email ({user.email})
+              <RotateCcw size={11} /> {interpolateContent(content.useAccountEmail, { email: user.email })}
             </button>
           )}
         </div>
         <input
           type="email"
           className="rfw-input"
-          placeholder="name@example.com"
+          placeholder={content.emailPlaceholder}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -228,32 +235,32 @@ export const NewsletterTab: React.FC<NewsletterTabProps> = ({ appId, user, onSub
       </div>
 
       <div className="rfw-field">
-        <label className="rfw-label">Your Name (Optional)</label>
+        <label className="rfw-label">{content.nameLabel}</label>
         <input
           type="text"
           className="rfw-input"
-          placeholder="e.g. Alex"
+          placeholder={content.namePlaceholder}
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
       </div>
 
       <div className="rfw-field">
-        <label className="rfw-label">Email Frequency</label>
+        <label className="rfw-label">{content.frequencyLabel}</label>
         <select
           className="rfw-input"
           value={frequency}
-          onChange={(e) => setFrequency(e.target.value as any)}
+          onChange={(e) => setFrequency(e.target.value as 'all' | 'weekly' | 'monthly')}
         >
-          <option value="all">All Updates & Product News</option>
-          <option value="weekly">Weekly Summary Digest</option>
-          <option value="monthly">Monthly Major Releases Only</option>
+          <option value="all">{content.frequencyOptions.all}</option>
+          <option value="weekly">{content.frequencyOptions.weekly}</option>
+          <option value="monthly">{content.frequencyOptions.monthly}</option>
         </select>
       </div>
 
       <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
         <button type="submit" className="rfw-btn-submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Saving...' : showManagePrefs ? 'Save Updated Preferences' : 'Subscribe to Newsletter'}
+          {isSubmitting ? content.savingButton : showManagePrefs ? content.savePreferencesButton : content.subscribeButton}
         </button>
 
         {showManagePrefs && (
@@ -272,7 +279,7 @@ export const NewsletterTab: React.FC<NewsletterTabProps> = ({ appId, user, onSub
               cursor: 'pointer',
             }}
           >
-            Unsubscribe from Newsletter
+            {content.unsubscribeButton}
           </button>
         )}
       </div>
