@@ -13,6 +13,8 @@ import { useEnvironmentMeta } from '../../hooks/useEnvironmentMeta';
 import { CheckCircle2, AlertCircle, Paperclip, X, Bug, Lightbulb, LifeBuoy, Inbox } from 'lucide-react';
 import { DEFAULT_ENGAGE_CONTENT, interpolateContent } from '../../content';
 
+import { SuggestionList } from './SuggestionList';
+
 export type FeedbackCategory = 'bug' | 'suggestion' | 'support';
 
 interface FeedbackFormTabProps {
@@ -20,10 +22,13 @@ interface FeedbackFormTabProps {
   user?: WidgetUser;
   themeMode: 'light' | 'dark';
   initialCategory?: FeedbackCategory;
+  endpointUrl?: string;
   onSubmitBug: (payload: BugReportPayload) => Promise<void> | void;
   onSubmitSuggestion: (payload: SuggestionPayload) => Promise<void> | void;
+  onVoteSuggestion?: (suggestionId: string, action: 'upvote' | 'unvote') => Promise<void> | void;
   onSubmitTicket: (payload: TicketPayload) => Promise<void> | void;
   onViewTickets?: () => void;
+  enableCommunityRoadmap?: boolean;
   content?: EngageWidgetContent['feedback'];
 }
 
@@ -32,15 +37,19 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
   user,
   themeMode,
   initialCategory = 'bug',
+  endpointUrl,
   onSubmitBug,
   onSubmitSuggestion,
+  onVoteSuggestion,
   onSubmitTicket,
   onViewTickets,
+  enableCommunityRoadmap = true,
   content = DEFAULT_ENGAGE_CONTENT.feedback,
 }) => {
   const envMeta = useEnvironmentMeta(themeMode);
 
   const [category, setCategory] = useState<FeedbackCategory>(initialCategory);
+  const [suggestionMode, setSuggestionMode] = useState<'list' | 'create'>('list');
   
   // Shared & specific form fields
   const [title, setTitle] = useState('');
@@ -203,7 +212,7 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* Mini Category Pills inside the parent tab */}
       <div className="rfw-mini-nav">
         <button
@@ -249,7 +258,44 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
         ) : null}
       </div>
 
-      {errorMsg && (
+      {category === 'suggestion' && suggestionMode === 'list' && enableCommunityRoadmap ? (
+        <SuggestionList
+          appId={appId}
+          user={user}
+          endpointUrl={endpointUrl}
+          onVoteSuggestion={onVoteSuggestion}
+          onCreateNew={() => {
+            setSuggestionMode('create');
+            setErrorMsg(null);
+          }}
+          content={content}
+        />
+      ) : (
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+          {category === 'suggestion' && enableCommunityRoadmap && (
+            <div style={{ marginBottom: 12 }}>
+              <button
+                type="button"
+                onClick={() => setSuggestionMode('list')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--rfw-accent)',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+              >
+                ← Back to Community Ideas
+              </button>
+            </div>
+          )}
+
+          {errorMsg && (
         <div
           style={{
             padding: '10px 12px',
@@ -421,5 +467,7 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
           : content.submitButtons.support}
       </button>
     </form>
-  );
+    )}
+  </div>
+);
 };

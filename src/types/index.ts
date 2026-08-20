@@ -71,6 +71,22 @@ export interface TicketPayload {
   timestamp: string;
 }
 
+export type SuggestionStatus = 'under_review' | 'planned' | 'in_progress' | 'completed' | 'open';
+
+export interface SuggestionItem {
+  id: string;
+  appId: string;
+  title: string;
+  description: string;
+  category: SuggestionCategory;
+  status: SuggestionStatus;
+  upvotes: number;
+  hasVoted?: boolean;
+  userEmail?: string;
+  userName?: string;
+  createdAt: string;
+}
+
 export interface EngageTicket {
   id: string;
   type: 'bug' | 'suggestion' | 'ticket';
@@ -79,6 +95,7 @@ export interface EngageTicket {
   status: 'open' | 'in_progress' | 'resolved' | 'closed';
   subject?: string;
   message: string;
+  upvotes?: number;
   createdAt: string;
 }
 
@@ -254,6 +271,10 @@ export interface FeedbackWidgetProps {
   onSubmitBug?: (payload: BugReportPayload) => Promise<void> | void;
   /** Callback triggered when a suggestion is submitted */
   onSubmitSuggestion?: (payload: SuggestionPayload) => Promise<void> | void;
+  /** Callback triggered when voting on a community suggestion */
+  onVoteSuggestion?: (suggestionId: string, action: 'upvote' | 'unvote') => Promise<void> | void;
+  /** Allow browsing community suggestions and voting directly in the widget (defaults to true) */
+  enableCommunityRoadmap?: boolean;
   /** Callback triggered when a support ticket is submitted */
   onSubmitTicket?: (payload: TicketPayload) => Promise<void> | void;
   /** Callback triggered when a user subscribes to the newsletter */

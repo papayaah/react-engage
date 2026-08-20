@@ -75,10 +75,12 @@ export interface EngageServerConfig {
     subscribers?: any;
     templates?: any;
     broadcasts?: any;
+    suggestionVotes?: any;
   };
 }
 
 const globalBroadcastStore: BroadcastRecord[] = [];
+const globalSuggestionVoteStore = new Set<string>(); // "suggestionId:userKey"
 
 // Memory store fallback for standalone app without DB
 const globalTicketStore: StoredTicket[] = [];
@@ -175,6 +177,68 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
           { headers: { 'content-type': 'text/html' } }
         );
       }
+    }
+
+    if (action === 'list_suggestions') {
+      const userKey = searchParams.get('userKey') || (await resolveRequestUser(req))?.email || '';
+
+      if (db && tables?.tickets) {
+        try {
+          const { desc, eq } = await import('drizzle-orm');
+          const suggestions = await db
+            .select()
+            .from(tables.tickets)
+            .where(eq(tables.tickets.type, 'suggestion'))
+            .orderBy(desc(tables.tickets.upvotes), desc(tables.tickets.createdAt));
+
+          let votedIds = new Set<string>();
+          if (userKey && tables?.suggestionVotes) {
+            const userVotes = await db
+              .select({ suggestionId: tables.suggestionVotes.suggestionId })
+              .from(tables.suggestionVotes)
+              .where(eq(tables.suggestionVotes.userKey, userKey));
+            votedIds = new Set(userVotes.map((v: any) => v.suggestionId));
+          }
+
+          const formatted = suggestions.map((s: any) => ({
+            id: s.id,
+            appId: s.appId,
+            title: s.subject || 'Feature Suggestion',
+            description: s.message,
+            category: (s.category?.toLowerCase() as any) || 'new_feature',
+            status: s.status || 'under_review',
+            upvotes: Number(s.upvotes || 0),
+            hasVoted: votedIds.has(s.id),
+            userEmail: s.userEmail,
+            userName: s.userName,
+            createdAt: s.createdAt,
+          }));
+
+          return NextResponse.json({ suggestions: formatted });
+        } catch (e) {
+          console.error('[Engage API Suggestions Fetch Error]:', e);
+        }
+      }
+
+      // Memory store fallback
+      const suggestions = ticketStore
+        .filter((t) => t.type === 'suggestion')
+        .map((s) => ({
+          id: s.id,
+          appId: (s as any).appId || 'app',
+          title: s.subject || 'Feature Suggestion',
+          description: s.message,
+          category: (s.category?.toLowerCase() as any) || 'new_feature',
+          status: s.status || 'under_review',
+          upvotes: Number((s as any).upvotes || 0),
+          hasVoted: userKey ? globalSuggestionVoteStore.has(`${s.id}:${userKey}`) : false,
+          userEmail: s.userEmail,
+          userName: s.userName,
+          createdAt: s.createdAt,
+        }))
+        .sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
+
+      return NextResponse.json({ suggestions });
     }
 
     if (action === 'list_subscribers') {
@@ -297,6 +361,118 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
         }
 
         return NextResponse.json({ success: true, ticketId, status: 'resolved' });
+      }
+
+      // Community Suggestion Vote Action
+      if (action === 'vote_suggestion') {
+        const { suggestionId, userKey: rawUserKey, voteAction } = body;
+        const requestUser = await resolveRequestUser(req);
+        const userKey = rawUserKey || requestUser?.email || requestUser?.id || 'anonymous';
+
+        if (!suggestionId) {
+          return NextResponse.json({ error: 'Missing suggestionId' }, { status: 400 });
+        }
+
+        const isUpvote = voteAction !== 'unvote';
+
+        if (db && tables?.tickets) {
+          try {
+            const { eq, and, sql } = await import('drizzle-orm');
+
+            if (tables?.suggestionVotes) {
+              if (isUpvote) {
+                await db.insert(tables.suggestionVotes).values({
+                  id: `vote_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+                  suggestionId,
+                  userKey,
+                  createdAt: new Date().toISOString(),
+                }).onConflictDoNothing();
+              } else {
+                await db.delete(tables.suggestionVotes).where(
+                  and(
+                    eq(tables.suggestionVotes.suggestionId, suggestionId),
+                    eq(tables.suggestionVotes.userKey, userKey)
+                  )
+                );
+              }
+            }
+
+            if (isUpvote) {
+              await db.update(tables.tickets)
+                .set({ upvotes: sql`COALESCE(${tables.tickets.upvotes}, 0) + 1` })
+                .where(eq(tables.tickets.id, suggestionId));
+            } else {
+              await db.update(tables.tickets)
+                .set({ upvotes: sql`GREATEST(0, COALESCE(${tables.tickets.upvotes}, 0) - 1)` })
+                .where(eq(tables.tickets.id, suggestionId));
+            }
+
+            const [updated] = await db.select().from(tables.tickets).where(eq(tables.tickets.id, suggestionId));
+
+            return NextResponse.json({
+              success: true,
+              suggestionId,
+              upvotes: Number(updated?.upvotes || 0),
+              hasVoted: isUpvote,
+            });
+          } catch (e) {
+            console.error('[Engage API Vote Error]:', e);
+          }
+        }
+
+        // Memory store fallback
+        const voteKey = `${suggestionId}:${userKey}`;
+        const ticket = ticketStore.find((t) => t.id === suggestionId);
+        if (ticket) {
+          (ticket as any).upvotes = (ticket as any).upvotes || 0;
+          if (isUpvote) {
+            if (!globalSuggestionVoteStore.has(voteKey)) {
+              globalSuggestionVoteStore.add(voteKey);
+              (ticket as any).upvotes += 1;
+            }
+          } else {
+            if (globalSuggestionVoteStore.has(voteKey)) {
+              globalSuggestionVoteStore.delete(voteKey);
+              (ticket as any).upvotes = Math.max(0, (ticket as any).upvotes - 1);
+            }
+          }
+        }
+
+        return NextResponse.json({
+          success: true,
+          suggestionId,
+          upvotes: ticket ? (ticket as any).upvotes : 0,
+          hasVoted: isUpvote,
+        });
+      }
+
+      // Update Suggestion Status (Admin)
+      if (action === 'update_suggestion_status') {
+        const forbidden = await requireAdmin(req);
+        if (forbidden) return forbidden;
+
+        const { suggestionId, status } = body;
+        if (!suggestionId || !status) {
+          return NextResponse.json({ error: 'Missing suggestionId or status' }, { status: 400 });
+        }
+
+        if (db && tables?.tickets) {
+          try {
+            const { eq } = await import('drizzle-orm');
+            await db.update(tables.tickets)
+              .set({ status })
+              .where(eq(tables.tickets.id, suggestionId));
+            return NextResponse.json({ success: true, suggestionId, status });
+          } catch (e) {
+            console.error('[Engage API Status Update Error]:', e);
+          }
+        }
+
+        const ticket = ticketStore.find((t) => t.id === suggestionId);
+        if (ticket) {
+          ticket.status = status;
+        }
+        return NextResponse.json({ success: true, suggestionId, status });
       }
 
       // 2. ADMIN ACTION: Send newsletter broadcast to subscribers

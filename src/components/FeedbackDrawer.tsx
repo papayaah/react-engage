@@ -31,8 +31,10 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
   endpointUrl,
   onSubmitBug,
   onSubmitSuggestion,
+  onVoteSuggestion,
   onSubmitTicket,
   onSubmitNewsletter,
+  enableCommunityRoadmap = true,
   onClose,
 }) => {
   const copy = resolvedContent ?? resolveEngageContent(content, labels);
@@ -143,10 +145,13 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
                 user={user}
                 themeMode={themeMode}
                 initialCategory={initialFeedbackCategory}
+                endpointUrl={endpointUrl}
                 onSubmitBug={handleBugSubmit}
                 onSubmitSuggestion={handleSuggestionSubmit}
+                onVoteSuggestion={onVoteSuggestion}
                 onSubmitTicket={handleTicketSubmit}
                 onViewTickets={() => setSupportView('tickets')}
+                enableCommunityRoadmap={enableCommunityRoadmap}
                 content={copy.feedback}
               />
             ) : (
