@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Inbox, Mail, FileText, Send, User, RefreshCw, Filter, Eye, Users, Download, Search, X, Paperclip } from 'lucide-react';
+import { Inbox, Mail, FileText, Send, User, RefreshCw, Filter, Eye, Users, Download, Search, X, Paperclip, Lightbulb } from 'lucide-react';
 
 export interface TicketItem {
   id: string;
@@ -49,6 +49,10 @@ export interface EngageAdminPanelProps {
   onSaveTemplate?: (template: EmailTemplate) => Promise<void>;
   /** Custom handler when admin dispatches a newsletter broadcast */
   onSendBroadcast?: (subject: string, bodyContent: string) => Promise<void>;
+  /** Host-owned starting templates. Defaults are deliberately product-neutral. */
+  initialTemplates?: EmailTemplate[];
+  /** Host-owned initial newsletter subject. */
+  initialBroadcastSubject?: string;
 }
 
 const DEFAULT_TEMPLATES: EmailTemplate[] = [
@@ -84,9 +88,9 @@ const DEFAULT_TEMPLATES: EmailTemplate[] = [
   {
     id: 'newsletter',
     name: 'Product Update / Newsletter',
-    subject: '🚀 What’s New in Trading Diary - Feature Digest',
+    subject: '🚀 Product Updates - Feature Digest',
     htmlContent: `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-  <h2 style="color: #10b981; margin-top: 0;">Trading Diary Updates 🚀</h2>
+  <h2 style="color: #10b981; margin-top: 0;">Product Updates 🚀</h2>
   <p>Here is what we shipped this week based on your feedback:</p>
   <div style="background: #f1f5f9; padding: 14px; border-radius: 6px; font-size: 14px; margin: 16px 0;">
     {{broadcast_content}}
@@ -102,11 +106,16 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
   onSendReply,
   onSaveTemplate,
   onSendBroadcast,
+  initialTemplates = DEFAULT_TEMPLATES,
+  initialBroadcastSubject = 'New Product Updates',
 }) => {
-  const [activeTab, setActiveTab] = useState<'inbox' | 'templates' | 'newsletter'>(defaultTab as any);
+  const [activeTab, setActiveTab] = useState<'inbox' | 'suggestions' | 'newsletter' | 'templates'>(defaultTab as any);
   const [audienceSubTab, setAudienceSubTab] = useState<'broadcast' | 'subscribers' | 'history'>('broadcast');
   const [subscriberSearch, setSubscriberSearch] = useState('');
+  const [suggestionSearch, setSuggestionSearch] = useState('');
+  const [suggestionStatusFilter, setSuggestionStatusFilter] = useState('all');
   const [tickets, setTickets] = useState<TicketItem[]>([]);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<TicketItem | null>(null);
   const [filterType, setFilterType] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(false);
@@ -116,14 +125,15 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // Template state
-  const [templates, setTemplates] = useState<EmailTemplate[]>(DEFAULT_TEMPLATES);
+  const startingTemplates = initialTemplates.length > 0 ? initialTemplates : DEFAULT_TEMPLATES;
+  const [templates, setTemplates] = useState<EmailTemplate[]>(startingTemplates);
   const [selectedTemplateId, setSelectedTemplateId] = useState<'welcome' | 'ticket_reply' | 'newsletter'>('welcome');
-  const [editSubject, setEditSubject] = useState(DEFAULT_TEMPLATES[0].subject);
-  const [editHtml, setEditHtml] = useState(DEFAULT_TEMPLATES[0].htmlContent);
+  const [editSubject, setEditSubject] = useState(startingTemplates[0].subject);
+  const [editHtml, setEditHtml] = useState(startingTemplates[0].htmlContent);
   const [templateStatus, setTemplateStatus] = useState<string | null>(null);
 
   // Broadcast state
-  const [broadcastSubject, setBroadcastSubject] = useState('New Product Updates');
+  const [broadcastSubject, setBroadcastSubject] = useState(initialBroadcastSubject);
   const [broadcastBody, setBroadcastBody] = useState('');
   const [isSendingBroadcast, setIsSendingBroadcast] = useState(false);
   const [broadcastStatus, setBroadcastStatus] = useState<string | null>(null);
@@ -131,7 +141,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
   const [subscribers, setSubscribers] = useState<any[]>([]);
   const [broadcasts, setBroadcasts] = useState<any[]>([]);
 
-  // Load tickets, subscribers, and broadcast history from API
+  // Load tickets, suggestions, subscribers, and broadcast history from API
   const fetchTickets = async () => {
     setIsLoading(true);
     try {
@@ -143,6 +153,15 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
           if (data.tickets.length > 0 && !selectedTicket) {
             setSelectedTicket(data.tickets[0]);
           }
+        }
+      }
+
+      // Fetch suggestions list
+      const suggRes = await fetch(`${apiEndpoint}?action=list_suggestions`);
+      if (suggRes.ok) {
+        const suggData = await suggRes.json();
+        if (Array.isArray(suggData.suggestions)) {
+          setSuggestions(suggData.suggestions);
         }
       }
 
@@ -277,6 +296,21 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
     }
   };
 
+  const handleUpdateSuggestionStatus = async (suggestionId: string, status: string) => {
+    try {
+      await fetch(`${apiEndpoint}?action=update_suggestion_status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ suggestionId, status }),
+      });
+      setSuggestions((prev) =>
+        prev.map((s) => (s.id === suggestionId ? { ...s, status } : s))
+      );
+    } catch (e) {
+      console.error('[EngageAdmin] Failed to update suggestion status:', e);
+    }
+  };
+
   const filteredTickets = tickets.filter((t) => filterType === 'all' || t.type === filterType);
 
   return (
@@ -321,7 +355,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
               color: 'var(--muted, #64748b)',
             }}
           >
-            v0.2.0
+            v0.3.0
           </span>
         </div>
 
@@ -348,6 +382,31 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
             {tickets.length > 0 && (
               <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 'var(--radius-sm, 0px)', background: 'rgba(255,255,255,0.25)' }}>
                 {tickets.length}
+              </span>
+            )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('suggestions')}
+            style={{
+              padding: '6px 14px',
+              borderRadius: 6,
+              border: 'none',
+              fontSize: 13,
+              fontWeight: 500,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              backgroundColor: activeTab === 'suggestions' ? 'var(--accent, #3b82f6)' : 'transparent',
+              color: activeTab === 'suggestions' ? '#ffffff' : 'var(--muted, #64748b)',
+            }}
+          >
+            <Lightbulb size={14} />
+            <span className="rfw-tab-text">Feature Roadmap</span>
+            {suggestions.length > 0 && (
+              <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 10, background: 'rgba(255,255,255,0.25)' }}>
+                {suggestions.length}
               </span>
             )}
           </button>
@@ -802,7 +861,214 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
           </>
         )}
 
-        {/* TAB 2: EMAIL TEMPLATES */}
+        {/* TAB: FEATURE ROADMAP & COMMUNITY SUGGESTIONS */}
+        {activeTab === 'suggestions' && (
+          <div style={{ flex: 1, padding: 24, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+              <div>
+                <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 4px 0', color: 'var(--foreground, #0f172a)' }}>
+                  💡 Community Feature Roadmap & Upvotes
+                </h3>
+                <p style={{ fontSize: 13, color: 'var(--muted, #64748b)', margin: 0 }}>
+                  Prioritize user-requested features, monitor voter demand, and manage public roadmap statuses.
+                </p>
+              </div>
+
+              {/* Stats Counters */}
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ padding: '8px 14px', borderRadius: 8, background: 'var(--muted-bg, #f8fafc)', border: '1px solid var(--card-border, #e2e8f0)', textAlign: 'center' }}>
+                  <div style={{ fontSize: 11, color: 'var(--muted, #64748b)', fontWeight: 600 }}>Total Ideas</div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--foreground, #0f172a)' }}>{suggestions.length}</div>
+                </div>
+                <div style={{ padding: '8px 14px', borderRadius: 8, background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)', textAlign: 'center' }}>
+                  <div style={{ fontSize: 11, color: '#3b82f6', fontWeight: 600 }}>Total Upvotes</div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: '#3b82f6' }}>
+                    {suggestions.reduce((acc, curr) => acc + (Number(curr.upvotes) || 0), 0)}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Filter and Search Bar */}
+            <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+              <div style={{ position: 'relative', flex: 1, minWidth: 260 }}>
+                <Search size={15} style={{ position: 'absolute', left: 12, top: 11, color: 'var(--muted, #94a3b8)' }} />
+                <input
+                  type="text"
+                  value={suggestionSearch}
+                  onChange={(e) => setSuggestionSearch(e.target.value)}
+                  placeholder="Search feature ideas..."
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px 8px 36px',
+                    borderRadius: 6,
+                    border: '1px solid var(--card-border, #cbd5e1)',
+                    backgroundColor: 'var(--card-bg, #ffffff)',
+                    color: 'var(--foreground, #0f172a)',
+                    fontSize: 13,
+                  }}
+                />
+              </div>
+
+              <select
+                value={suggestionStatusFilter}
+                onChange={(e) => setSuggestionStatusFilter(e.target.value)}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: 6,
+                  border: '1px solid var(--card-border, #cbd5e1)',
+                  backgroundColor: 'var(--card-bg, #ffffff)',
+                  color: 'var(--foreground, #0f172a)',
+                  fontSize: 13,
+                }}
+              >
+                <option value="all">All Statuses</option>
+                <option value="under_review">Under Review</option>
+                <option value="planned">Planned</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+
+            {/* Suggestions Table */}
+            <div
+              style={{
+                backgroundColor: 'var(--card-bg, #ffffff)',
+                border: '1px solid var(--card-border, #cbd5e1)',
+                borderRadius: 8,
+                overflow: 'hidden',
+              }}
+            >
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ backgroundColor: 'var(--muted-bg, #f8fafc)', borderBottom: '1px solid var(--card-border, #e2e8f0)', color: 'var(--muted, #64748b)' }}>
+                    <th style={{ padding: '10px 14px', width: 90, textAlign: 'center' }}>Upvotes</th>
+                    <th style={{ padding: '10px 14px' }}>Feature Request</th>
+                    <th style={{ padding: '10px 14px', width: 130 }}>Topic</th>
+                    <th style={{ padding: '10px 14px', width: 180 }}>Submitter</th>
+                    <th style={{ padding: '10px 14px', width: 160 }}>Roadmap Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {suggestions.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} style={{ padding: 32, textAlign: 'center', color: 'var(--muted, #64748b)' }}>
+                        No community suggestions submitted yet.
+                      </td>
+                    </tr>
+                  ) : (
+                    suggestions
+                      .filter((sugg) => {
+                        const matchesSearch =
+                          !suggestionSearch ||
+                          sugg.title.toLowerCase().includes(suggestionSearch.toLowerCase()) ||
+                          sugg.description.toLowerCase().includes(suggestionSearch.toLowerCase());
+                        const matchesStatus =
+                          suggestionStatusFilter === 'all' || sugg.status === suggestionStatusFilter;
+                        return matchesSearch && matchesStatus;
+                      })
+                      .map((sugg, idx) => (
+                        <tr key={`sugg-row-${sugg.id || idx}`} style={{ borderBottom: '1px solid var(--card-border, #f1f5f9)' }}>
+                          {/* Upvotes Column */}
+                          <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 4,
+                                padding: '4px 10px',
+                                borderRadius: 12,
+                                backgroundColor: 'rgba(59, 130, 246, 0.12)',
+                                color: '#2563eb',
+                                fontWeight: 700,
+                                fontSize: 12,
+                              }}
+                            >
+                              ▲ {sugg.upvotes || 0}
+                            </span>
+                          </td>
+
+                          {/* Title & Description */}
+                          <td style={{ padding: '12px 14px' }}>
+                            <div style={{ fontWeight: 600, color: 'var(--foreground, #0f172a)', marginBottom: 2 }}>
+                              {sugg.title}
+                            </div>
+                            <div style={{ color: 'var(--muted, #64748b)', fontSize: 12, lineHeight: 1.4 }}>
+                              {sugg.description}
+                            </div>
+                          </td>
+
+                          {/* Topic / Category */}
+                          <td style={{ padding: '12px 14px' }}>
+                            <span
+                              style={{
+                                fontSize: 11,
+                                fontWeight: 600,
+                                padding: '2px 8px',
+                                borderRadius: 6,
+                                backgroundColor: 'var(--muted-bg, #f1f5f9)',
+                                color: 'var(--muted, #64748b)',
+                                textTransform: 'uppercase',
+                              }}
+                            >
+                              {sugg.category || 'Feature'}
+                            </span>
+                          </td>
+
+                          {/* Submitter info */}
+                          <td style={{ padding: '12px 14px', color: 'var(--muted, #64748b)', fontSize: 12 }}>
+                            <div>{sugg.userEmail || sugg.userName || 'Anonymous'}</div>
+                            <div style={{ fontSize: 11, opacity: 0.7 }}>
+                              {new Date(sugg.createdAt).toLocaleDateString()}
+                            </div>
+                          </td>
+
+                          {/* Roadmap Status Editor */}
+                          <td style={{ padding: '12px 14px' }}>
+                            <select
+                              value={sugg.status || 'under_review'}
+                              onChange={(e) => handleUpdateSuggestionStatus(sugg.id, e.target.value)}
+                              style={{
+                                padding: '5px 10px',
+                                borderRadius: 6,
+                                border: '1px solid var(--card-border, #cbd5e1)',
+                                backgroundColor:
+                                  sugg.status === 'completed'
+                                    ? 'rgba(16, 185, 129, 0.12)'
+                                    : sugg.status === 'in_progress'
+                                    ? 'rgba(59, 130, 246, 0.12)'
+                                    : sugg.status === 'planned'
+                                    ? 'rgba(168, 85, 247, 0.12)'
+                                    : 'var(--card-bg, #ffffff)',
+                                color:
+                                  sugg.status === 'completed'
+                                    ? '#059669'
+                                    : sugg.status === 'in_progress'
+                                    ? '#2563eb'
+                                    : sugg.status === 'planned'
+                                    ? '#9333ea'
+                                    : 'var(--foreground, #0f172a)',
+                                fontWeight: 600,
+                                fontSize: 12,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <option value="under_review">Under Review</option>
+                              <option value="planned">Planned</option>
+                              <option value="in_progress">In Progress</option>
+                              <option value="completed">Completed</option>
+                            </select>
+                          </td>
+                        </tr>
+                      ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: EMAIL TEMPLATES */}
         {activeTab === 'templates' && (
           <div style={{ flex: 1, display: 'flex', padding: 20, gap: 20 }}>
             {/* Template Selector list */}
@@ -919,8 +1185,8 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                     dangerouslySetInnerHTML={{
                       __html: editHtml
                         .replace(/\{\{user_name\}\}/g, 'Alex')
-                        .replace(/\{\{ticket_subject\}\}/g, 'IBKR Sync')
-                        .replace(/\{\{reply_text\}\}/g, 'We have resolved the sync issue in v0.2.0.')
+                        .replace(/\{\{ticket_subject\}\}/g, 'Account Sync')
+                        .replace(/\{\{reply_text\}\}/g, 'We have resolved the reported issue.')
                         .replace(/\{\{broadcast_content\}\}/g, 'New custom dashboards & dark mode contrast improvements.'),
                     }}
                   />
@@ -1111,7 +1377,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                       type="text"
                       value={broadcastSubject}
                       onChange={(e) => setBroadcastSubject(e.target.value)}
-                      placeholder="e.g. 🚀 What's new in Trading Diary v0.2.0"
+                    placeholder="e.g. 🚀 What's new in this release"
                       style={{
                         width: '100%',
                         padding: '10px 14px',
@@ -1423,4 +1689,3 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
     </div>
   );
 };
-

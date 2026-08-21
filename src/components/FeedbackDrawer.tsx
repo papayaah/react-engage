@@ -5,16 +5,19 @@ import {
   NewsletterPayload,
   SuggestionPayload,
   TicketPayload,
+  EngageWidgetContent,
 } from '../types';
 import { FaqTab } from './tabs/FaqTab';
 import { FeedbackFormTab, FeedbackCategory } from './tabs/FeedbackFormTab';
 import { NewsletterTab } from './tabs/NewsletterTab';
 import { MyTicketsTab } from './tabs/MyTicketsTab';
 import { X, HelpCircle, MessageSquare, Mail } from 'lucide-react';
+import { resolveEngageContent } from '../content';
 
 interface FeedbackDrawerProps extends FeedbackWidgetProps {
   onClose: () => void;
   themeMode: 'light' | 'dark';
+  resolvedContent?: EngageWidgetContent;
 }
 
 export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
@@ -22,14 +25,19 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
   user,
   faqs,
   labels,
+  content,
+  resolvedContent,
   themeMode,
   endpointUrl,
   onSubmitBug,
   onSubmitSuggestion,
+  onVoteSuggestion,
   onSubmitTicket,
   onSubmitNewsletter,
+  enableCommunityRoadmap = true,
   onClose,
 }) => {
+  const copy = resolvedContent ?? resolveEngageContent(content, labels);
   const [activeTab, setActiveTab] = useState<'faq' | 'feedback' | 'newsletter'>('faq');
   const [supportView, setSupportView] = useState<'new' | 'tickets'>('new');
   const [ticketRefreshKey, setTicketRefreshKey] = useState(0);
@@ -84,11 +92,11 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
   };
 
   return (
-    <div className="rfw-drawer" role="dialog" aria-label="Help & Feedback Drawer">
+    <div className="rfw-drawer" role="dialog" aria-label={copy.launcher.drawerAriaLabel}>
       {/* Header */}
       <div className="rfw-header">
-        <h2 className="rfw-title">{labels?.launcherTitle || 'Help & Feedback'}</h2>
-        <button className="rfw-close-btn" onClick={onClose} aria-label="Close panel">
+        <h2 className="rfw-title">{copy.launcher.title}</h2>
+        <button className="rfw-close-btn" onClick={onClose} aria-label={copy.launcher.closeLabel}>
           <X size={18} />
         </button>
       </div>
@@ -101,7 +109,7 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
           onClick={() => setActiveTab('faq')}
         >
           <HelpCircle size={15} />
-          <span>{labels?.faqTabTitle || 'FAQ'}</span>
+          <span>{copy.tabs.faq}</span>
         </button>
 
         <button
@@ -113,7 +121,7 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
           }}
         >
           <MessageSquare size={15} />
-          <span>{labels?.bugTabTitle || 'Support'}</span>
+          <span>{copy.tabs.support}</span>
         </button>
 
         <button
@@ -122,13 +130,13 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
           onClick={() => setActiveTab('newsletter')}
         >
           <Mail size={15} />
-          <span>{labels?.newsletterTabTitle || 'Newsletter'}</span>
+          <span>{copy.tabs.newsletter}</span>
         </button>
       </div>
 
       {/* Body panel content */}
       <div className="rfw-body">
-        {activeTab === 'faq' && <FaqTab faqs={faqs} />}
+        {activeTab === 'faq' && <FaqTab faqs={faqs ?? copy.faq.items} content={copy.faq} />}
         {activeTab === 'feedback' && (
           <div className="rfw-support-panel">
             {supportView === 'new' ? (
@@ -137,10 +145,14 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
                 user={user}
                 themeMode={themeMode}
                 initialCategory={initialFeedbackCategory}
+                endpointUrl={endpointUrl}
                 onSubmitBug={handleBugSubmit}
                 onSubmitSuggestion={handleSuggestionSubmit}
+                onVoteSuggestion={onVoteSuggestion}
                 onSubmitTicket={handleTicketSubmit}
                 onViewTickets={() => setSupportView('tickets')}
+                enableCommunityRoadmap={enableCommunityRoadmap}
+                content={copy.feedback}
               />
             ) : (
               <MyTicketsTab
@@ -148,6 +160,7 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
                 user={user}
                 refreshKey={ticketRefreshKey}
                 onBack={() => setSupportView('new')}
+                content={copy.tickets}
               />
             )}
           </div>
@@ -157,6 +170,7 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
             appId={appId}
             user={user}
             onSubmit={handleNewsletterSubmit}
+            content={copy.newsletter}
           />
         )}
       </div>

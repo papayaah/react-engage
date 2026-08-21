@@ -1,19 +1,15 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, ChevronDown, ChevronUp, Clock3, Inbox, RefreshCw } from 'lucide-react';
-import { EngageTicket, WidgetUser } from '../../types';
+import { EngageTicket, EngageWidgetContent, WidgetUser } from '../../types';
+import { DEFAULT_ENGAGE_CONTENT, interpolateContent } from '../../content';
 
 interface MyTicketsTabProps {
   endpointUrl?: string;
   user?: WidgetUser;
   refreshKey?: number;
   onBack?: () => void;
+  content?: EngageWidgetContent['tickets'];
 }
-
-const TYPE_LABELS: Record<EngageTicket['type'], string> = {
-  bug: 'Bug',
-  suggestion: 'Suggestion',
-  ticket: 'Support',
-};
 
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat(undefined, {
@@ -29,6 +25,7 @@ export const MyTicketsTab: React.FC<MyTicketsTabProps> = ({
   user,
   refreshKey = 0,
   onBack,
+  content = DEFAULT_ENGAGE_CONTENT.tickets,
 }) => {
   const [tickets, setTickets] = useState<EngageTicket[]>([]);
   const [expandedTicketId, setExpandedTicketId] = useState<string | null>(null);
@@ -47,7 +44,7 @@ export const MyTicketsTab: React.FC<MyTicketsTabProps> = ({
         signal,
       });
       if (!response.ok) {
-        throw new Error(response.status === 401 ? 'Sign in to view your tickets.' : 'Unable to load your tickets.');
+        throw new Error(response.status === 401 ? content.signInError : content.loadError);
       }
 
       const data = await response.json();
@@ -56,11 +53,11 @@ export const MyTicketsTab: React.FC<MyTicketsTabProps> = ({
       }
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') return;
-      setErrorMessage(error instanceof Error ? error.message : 'Unable to load your tickets.');
+      setErrorMessage(error instanceof Error ? error.message : content.loadError);
     } finally {
       if (!signal?.aborted) setIsLoading(false);
     }
-  }, [endpointUrl, userEmail]);
+  }, [content.loadError, content.signInError, endpointUrl, userEmail]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -72,8 +69,8 @@ export const MyTicketsTab: React.FC<MyTicketsTabProps> = ({
     <div className="rfw-tickets-panel">
       <div className="rfw-tickets-toolbar">
         <div className="rfw-tickets-toolbar-info">
-          <strong>My tickets</strong>
-          <span>{tickets.length} {tickets.length === 1 ? 'submission' : 'submissions'}</span>
+          <strong>{content.title}</strong>
+          <span>{tickets.length} {tickets.length === 1 ? content.submissionSingular : content.submissionPlural}</span>
         </div>
         <div className="rfw-ticket-toolbar-actions">
           {onBack ? (
@@ -81,8 +78,8 @@ export const MyTicketsTab: React.FC<MyTicketsTabProps> = ({
               type="button"
               className="rfw-icon-btn"
               onClick={onBack}
-              aria-label="Back to support form"
-              title="Back to support form"
+              aria-label={content.backLabel}
+              title={content.backLabel}
             >
               <ArrowLeft size={14} />
             </button>
@@ -93,8 +90,8 @@ export const MyTicketsTab: React.FC<MyTicketsTabProps> = ({
               className="rfw-icon-btn"
               onClick={() => void loadTickets()}
               disabled={isLoading}
-              aria-label="Refresh tickets"
-              title="Refresh tickets"
+              aria-label={content.refreshLabel}
+              title={content.refreshLabel}
             >
               <RefreshCw size={14} className={isLoading ? 'rfw-spin' : undefined} />
             </button>
@@ -107,16 +104,16 @@ export const MyTicketsTab: React.FC<MyTicketsTabProps> = ({
       {!userEmail ? (
         <div className="rfw-empty-state">
           <Inbox size={30} />
-          <strong>Sign in to view your tickets</strong>
-          <span>Tickets submitted while signed in will appear here with their latest status.</span>
+          <strong>{content.signedOutTitle}</strong>
+          <span>{content.signedOutMessage}</span>
         </div>
       ) : isLoading && tickets.length === 0 ? (
-        <div className="rfw-empty-state"><span>Loading your tickets…</span></div>
+        <div className="rfw-empty-state"><span>{content.loadingMessage}</span></div>
       ) : tickets.length === 0 ? (
         <div className="rfw-empty-state">
           <Inbox size={30} />
-          <strong>No tickets yet</strong>
-          <span>Your bug reports, suggestions, and support requests will appear here.</span>
+          <strong>{content.emptyTitle}</strong>
+          <span>{content.emptyMessage}</span>
         </div>
       ) : (
         <div className="rfw-ticket-list">
@@ -132,7 +129,7 @@ export const MyTicketsTab: React.FC<MyTicketsTabProps> = ({
                 >
                   <div className="rfw-ticket-summary-main">
                     <div className="rfw-ticket-meta-row">
-                      <span className="rfw-type-badge" data-type={ticket.type}>{TYPE_LABELS[ticket.type]}</span>
+                      <span className="rfw-type-badge" data-type={ticket.type}>{content.typeLabels[ticket.type]}</span>
                       <span className="rfw-status-badge" data-status={ticket.status}>
                         {ticket.status.replace('_', ' ')}
                       </span>
@@ -145,10 +142,10 @@ export const MyTicketsTab: React.FC<MyTicketsTabProps> = ({
 
                 {isExpanded ? (
                   <div className="rfw-ticket-detail">
-                    <div className="rfw-ticket-reference">Reference: {ticket.id}</div>
+                    <div className="rfw-ticket-reference">{content.referenceLabel}: {ticket.id}</div>
                     <p>{ticket.message}</p>
                     <div className="rfw-ticket-reply-note">
-                      Support replies are sent to <strong>{userEmail}</strong>. The status here updates when the team responds.
+                      {interpolateContent(content.replyNote, { email: userEmail })}
                     </div>
                   </div>
                 ) : null}

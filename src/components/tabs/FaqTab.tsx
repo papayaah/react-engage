@@ -1,46 +1,31 @@
 import React, { useState, useMemo } from 'react';
-import { FaqItem } from '../../types';
+import { EngageWidgetContent, FaqItem } from '../../types';
 import { Search, ChevronDown, ChevronUp, ExternalLink, HelpCircle } from 'lucide-react';
+import { DEFAULT_ENGAGE_CONTENT } from '../../content';
 
 interface FaqTabProps {
   faqs?: FaqItem[];
+  content?: EngageWidgetContent['faq'];
 }
 
-const DEFAULT_FAQS: FaqItem[] = [
-  {
-    id: 'faq-1',
-    question: 'How do I use this application?',
-    answer: 'Navigate using the sidebar or top bar controls. If you encounter any issues, use this widget to report a bug or request features.',
-    category: 'General',
-  },
-  {
-    id: 'faq-2',
-    question: 'Where can I find additional documentation?',
-    answer: 'Detailed guides and technical specs are available in the project documentation directory.',
-    category: 'General',
-  },
-  {
-    id: 'faq-3',
-    question: 'How do I submit feedback or bug reports?',
-    answer: 'Select the "Bug" or "Suggestion" tab at the top of this panel, fill in the details, and hit submit!',
-    category: 'Feedback',
-  },
-];
-
-export const FaqTab: React.FC<FaqTabProps> = ({ faqs = DEFAULT_FAQS }) => {
+export const FaqTab: React.FC<FaqTabProps> = ({
+  faqs,
+  content = DEFAULT_ENGAGE_CONTENT.faq,
+}) => {
+  const items = faqs ?? content.items;
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const filteredFaqs = useMemo(() => {
-    if (!searchQuery.trim()) return faqs;
+    if (!searchQuery.trim()) return items;
     const query = searchQuery.toLowerCase();
-    return faqs.filter(
+    return items.filter(
       (item) =>
         item.question.toLowerCase().includes(query) ||
         item.answer.toLowerCase().includes(query) ||
         item.category?.toLowerCase().includes(query)
     );
-  }, [faqs, searchQuery]);
+  }, [items, searchQuery]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -60,7 +45,7 @@ export const FaqTab: React.FC<FaqTabProps> = ({ faqs = DEFAULT_FAQS }) => {
             type="text"
             className="rfw-input"
             style={{ paddingLeft: 36 }}
-            placeholder="Search help articles & FAQs..."
+            placeholder={content.searchPlaceholder}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -71,7 +56,7 @@ export const FaqTab: React.FC<FaqTabProps> = ({ faqs = DEFAULT_FAQS }) => {
         {filteredFaqs.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '32px 16px', color: 'var(--rfw-muted)' }}>
             <HelpCircle size={32} style={{ marginBottom: 8, opacity: 0.5 }} />
-            <p style={{ margin: 0, fontSize: 14 }}>No FAQs found matching your search.</p>
+            <p style={{ margin: 0, fontSize: 14 }}>{content.emptyMessage}</p>
           </div>
         ) : (
           filteredFaqs.map((faq) => {
@@ -105,7 +90,7 @@ export const FaqTab: React.FC<FaqTabProps> = ({ faqs = DEFAULT_FAQS }) => {
                           textDecoration: 'none',
                         }}
                       >
-                        Read Full Article <ExternalLink size={12} />
+                        {content.readMoreLabel} <ExternalLink size={12} />
                       </a>
                     )}
                   </div>

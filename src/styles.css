@@ -827,6 +827,258 @@
 }
 
 /* Responsive Mobile Layout & Navigation Bar Clearance */
+/* ==========================================================================
+   Community Suggestions & Upvoting System
+   ========================================================================== */
+
+.rfw-suggestion-list-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 10px;
+}
+
+.rfw-sugg-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--rfw-card-border);
+}
+
+.rfw-sugg-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--rfw-fg);
+}
+
+.rfw-sugg-icon {
+  color: #eab308;
+}
+
+.rfw-sugg-subtitle {
+  margin: 2px 0 0 0;
+  font-size: 12px;
+  color: var(--rfw-muted);
+}
+
+.rfw-sugg-create-btn {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 8px;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.rfw-sugg-tabs {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.rfw-sugg-sort-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--rfw-card-bg);
+  border: 1px solid var(--rfw-card-border);
+  padding: 2px;
+  border-radius: 8px;
+}
+
+.rfw-sugg-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--rfw-muted);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.rfw-sugg-tab:hover {
+  color: var(--rfw-fg);
+}
+
+.rfw-sugg-tab.active {
+  background: var(--rfw-accent);
+  color: #ffffff;
+}
+
+.rfw-sugg-cat-select {
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid var(--rfw-card-border);
+  background: var(--rfw-card-bg);
+  color: var(--rfw-fg);
+  cursor: pointer;
+}
+
+.rfw-sugg-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  padding-right: 2px;
+  max-height: calc(100% - 76px);
+}
+
+.rfw-sugg-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--rfw-card-bg);
+  border: 1px solid var(--rfw-card-border);
+  border-radius: 10px;
+  transition: border-color 0.15s ease;
+}
+
+.rfw-sugg-card:hover {
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+/* Upvote Button */
+.rfw-upvote-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  padding: 6px 4px;
+  border-radius: 8px;
+  border: 1px solid var(--rfw-card-border);
+  background: var(--rfw-bg);
+  color: var(--rfw-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.rfw-upvote-btn:hover {
+  border-color: var(--rfw-accent);
+  color: var(--rfw-accent);
+  transform: translateY(-1px);
+}
+
+.rfw-upvote-btn.voted {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: var(--rfw-accent);
+  color: var(--rfw-accent);
+}
+
+.rfw-upvote-arrow {
+  transition: transform 0.15s ease;
+}
+
+.rfw-upvote-btn:hover .rfw-upvote-arrow {
+  transform: translateY(-2px);
+}
+
+.rfw-upvote-count {
+  font-size: 11px;
+  font-weight: 700;
+  margin-top: 1px;
+}
+
+.rfw-sugg-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.rfw-sugg-title-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.rfw-sugg-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--rfw-fg);
+  line-height: 1.3;
+}
+
+.rfw-sugg-desc {
+  margin: 4px 0 6px 0;
+  font-size: 12px;
+  color: var(--rfw-muted);
+  line-height: 1.4;
+}
+
+.rfw-sugg-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.rfw-category-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--rfw-card-border);
+  color: var(--rfw-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.rfw-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+.rfw-status-review {
+  background: rgba(148, 163, 184, 0.15);
+  color: var(--rfw-muted);
+}
+
+.rfw-status-planned {
+  background: rgba(168, 85, 247, 0.15);
+  color: #a855f7;
+}
+
+.rfw-status-progress {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.rfw-status-completed {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.rfw-sugg-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--rfw-muted);
+}
+
 @media (max-width: 640px) {
   /* Default elevation for mobile screens to clear bottom navigation bars */
   .rfw-position-bottom-right,
@@ -855,10 +1107,41 @@
     gap: 0;
   }
 
-  /* Adjust drawer width & max-height on small screens */
+  /* On phones the drawer docks to the bottom as a native-style action sheet:
+     full-width, rounded top, slides up. dvh (with vh fallback) keeps the header
+     from hiding under the mobile browser chrome. */
   .rfw-drawer {
-    width: calc(100vw - 32px);
-    max-height: calc(100vh - 120px);
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 100%;
+    height: 80vh;
+    height: 80dvh;
+    max-height: 92vh;
+    max-height: 92dvh;
+    margin: 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    border-radius: 20px 20px 0 0;
+    animation: rfw-sheet-up 0.24s ease-out;
+  }
+
+  /* Hide the floating launcher while the sheet is open so it doesn't overlap;
+     the sheet's own header X (and Esc / backdrop) closes it. */
+  .rfw-root:has(.rfw-drawer) .rfw-launcher-btn {
+    display: none;
+  }
+
+  @keyframes rfw-sheet-up {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
   }
 
   /* Admin Dashboard Mobile Responsive Styles */

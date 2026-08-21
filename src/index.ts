@@ -13,5 +13,6 @@ export { MyTicketsTab } from './components/tabs/MyTicketsTab';
 export { useEnvironmentMeta } from './hooks/useEnvironmentMeta';
 export { useFeedbackTheme } from './hooks/useFeedbackTheme';
 export { sendPayloadToEndpoint } from './utils/adapters';
+export { DEFAULT_ENGAGE_CONTENT, resolveEngageContent } from './content';
 
 export * from './types';

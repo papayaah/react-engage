@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { BugReportPayload, BugSeverity, WidgetUser, Attachment } from '../../types';
+import { BugReportPayload, BugSeverity, WidgetUser, Attachment, EngageWidgetContent } from '../../types';
 import { useEnvironmentMeta } from '../../hooks/useEnvironmentMeta';
 import { AreaSnipOverlay } from '../AreaSnipOverlay';
 import { CheckCircle2, AlertCircle, Paperclip, X, Crop, FileText } from 'lucide-react';
+import { DEFAULT_ENGAGE_CONTENT, interpolateContent } from '../../content';
 
 interface BugReportTabProps {
   appId: string;
   user?: WidgetUser;
   themeMode: 'light' | 'dark';
   onSubmit: (payload: BugReportPayload) => Promise<void> | void;
+  content?: EngageWidgetContent['feedback'];
 }
 
 export const BugReportTab: React.FC<BugReportTabProps> = ({
@@ -16,6 +18,7 @@ export const BugReportTab: React.FC<BugReportTabProps> = ({
   user,
   themeMode,
   onSubmit,
+  content = DEFAULT_ENGAGE_CONTENT.feedback,
 }) => {
   const envMeta = useEnvironmentMeta(themeMode);
 
@@ -104,7 +107,7 @@ export const BugReportTab: React.FC<BugReportTabProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !description.trim()) {
-      setErrorMsg('Please enter a summary and description.');
+      setErrorMsg(content.validation.missingSummary);
       return;
     }
 
@@ -128,7 +131,7 @@ export const BugReportTab: React.FC<BugReportTabProps> = ({
       await onSubmit(payload);
       setIsSubmitted(true);
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : 'Failed to submit bug report');
+      setErrorMsg(err instanceof Error ? err.message : content.errors.submitFailed);
     } finally {
       setIsSubmitting(false);
     }
@@ -140,9 +143,9 @@ export const BugReportTab: React.FC<BugReportTabProps> = ({
         <div className="rfw-success-icon">
           <CheckCircle2 size={28} />
         </div>
-        <h3 style={{ margin: 0, fontSize: 18, color: 'var(--rfw-fg)' }}>Bug Report Received!</h3>
+        <h3 style={{ margin: 0, fontSize: 18, color: 'var(--rfw-fg)' }}>{content.success.bugTitle}</h3>
         <p style={{ margin: 0, fontSize: 14, color: 'var(--rfw-muted)' }}>
-          Thank you for reporting this. Our engineering team will review the captured metadata and details.
+          {content.success.feedbackMessage}
         </p>
         <button
           className="rfw-btn-submit"
@@ -154,7 +157,7 @@ export const BugReportTab: React.FC<BugReportTabProps> = ({
             setAttachments([]);
           }}
         >
-          Report Another Issue
+          {content.success.submitMoreButton}
         </button>
       </div>
     );
@@ -187,11 +190,11 @@ export const BugReportTab: React.FC<BugReportTabProps> = ({
       )}
 
       <div className="rfw-field">
-        <label className="rfw-label">Issue Summary</label>
+        <label className="rfw-label">{content.summaryLabels.bug}</label>
         <input
           type="text"
           className="rfw-input"
-          placeholder="e.g. Navigation menu failed to open on click"
+          placeholder={content.summaryPlaceholders.bug}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           required
@@ -199,24 +202,24 @@ export const BugReportTab: React.FC<BugReportTabProps> = ({
       </div>
 
       <div className="rfw-field">
-        <label className="rfw-label">Severity Level</label>
+        <label className="rfw-label">{content.severityLabel}</label>
         <select
           className="rfw-select"
           value={severity}
           onChange={(e) => setSeverity(e.target.value as BugSeverity)}
         >
-          <option value="low">Low - Visual tweak or typo</option>
-          <option value="medium">Medium - Normal workflow affected</option>
-          <option value="high">High - Feature broken or error screen</option>
-          <option value="critical">Critical - App crash or data issue</option>
+          <option value="low">{content.severityOptions.low}</option>
+          <option value="medium">{content.severityOptions.medium}</option>
+          <option value="high">{content.severityOptions.high}</option>
+          <option value="critical">{content.severityOptions.critical}</option>
         </select>
       </div>
 
       <div className="rfw-field">
-        <label className="rfw-label">Description</label>
+        <label className="rfw-label">{content.messageLabels.feedback}</label>
         <textarea
           className="rfw-textarea"
-          placeholder="Describe what happened and how to trigger it..."
+          placeholder={content.messagePlaceholders.bug}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           required
@@ -224,11 +227,11 @@ export const BugReportTab: React.FC<BugReportTabProps> = ({
       </div>
 
       <div className="rfw-field">
-        <label className="rfw-label">Your Email (for updates)</label>
+        <label className="rfw-label">{content.emailLabels.optional}</label>
         <input
           type="email"
           className="rfw-input"
-          placeholder="name@example.com"
+          placeholder={content.emailPlaceholder}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
@@ -236,7 +239,7 @@ export const BugReportTab: React.FC<BugReportTabProps> = ({
 
       {/* Attachments */}
       <div className="rfw-field">
-        <label className="rfw-label">Attachments (Optional)</label>
+        <label className="rfw-label">{content.attachmentsLabel || 'Attachments (Optional)'}</label>
         <div
           className="rfw-dropzone"
           data-dragging={isDragging}
@@ -248,7 +251,7 @@ export const BugReportTab: React.FC<BugReportTabProps> = ({
           <div className="rfw-dropzone-actions">
             <label className="rfw-dropzone-btn">
               <Paperclip size={14} />
-              <span>Attach file</span>
+              <span>{content.attachmentAction || 'Attach file'}</span>
               <input
                 type="file"
                 accept="image/*,.log,.json,.txt,.csv"
@@ -271,7 +274,6 @@ export const BugReportTab: React.FC<BugReportTabProps> = ({
             Drop files here or paste from clipboard (Ctrl/Cmd+V)
           </div>
         </div>
-
         {attachments.length > 0 && (
           <div className="rfw-attachment-list">
             {attachments.map((att, i) => {
@@ -303,11 +305,11 @@ export const BugReportTab: React.FC<BugReportTabProps> = ({
       </div>
 
       <div style={{ fontSize: 11, color: 'var(--rfw-muted)', marginBottom: 12 }}>
-        ℹ️ Auto-capturing URL ({envMeta.path}), browser ({envMeta.browser}), and OS ({envMeta.os}).
+        ℹ️ {interpolateContent(content.telemetryNotice, { path: envMeta.path, browser: envMeta.browser, os: envMeta.os })}
       </div>
 
       <button type="submit" className="rfw-btn-submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Submitting...' : 'Submit Bug Report'}
+        {isSubmitting ? content.submitButtons.submitting : content.submitButtons.bug}
       </button>
 
       {/* In-Page Area Snipping Overlay */}

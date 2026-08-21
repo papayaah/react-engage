@@ -79,6 +79,22 @@ export interface TicketPayload {
   timestamp: string;
 }
 
+export type SuggestionStatus = 'under_review' | 'planned' | 'in_progress' | 'completed' | 'open';
+
+export interface SuggestionItem {
+  id: string;
+  appId: string;
+  title: string;
+  description: string;
+  category: SuggestionCategory;
+  status: SuggestionStatus;
+  upvotes: number;
+  hasVoted?: boolean;
+  userEmail?: string;
+  userName?: string;
+  createdAt: string;
+}
+
 export interface EngageTicket {
   id: string;
   type: 'bug' | 'suggestion' | 'ticket';
@@ -88,6 +104,7 @@ export interface EngageTicket {
   subject?: string;
   message: string;
   attachments?: Attachment[];
+  upvotes?: number;
   createdAt: string;
 }
 
@@ -108,6 +125,118 @@ export interface FaqItem {
   tags?: string[];
   externalUrl?: string;
 }
+
+export interface EngageWidgetContent {
+  launcher: {
+    title: string;
+    drawerAriaLabel: string;
+    closeLabel: string;
+  };
+  tabs: {
+    faq: string;
+    support: string;
+    newsletter: string;
+  };
+  faq: {
+    items: FaqItem[];
+    searchPlaceholder: string;
+    emptyMessage: string;
+    readMoreLabel: string;
+  };
+  feedback: {
+    categories: Record<'bug' | 'suggestion' | 'support', string>;
+    viewTicketsLabel: string;
+    myTicketsLabel: string;
+    validation: {
+      invalidEmail: string;
+      missingSupportMessage: string;
+      missingSummary: string;
+    };
+    errors: {
+      submitFailed: string;
+    };
+    payloadDefaults: {
+      bugTitle: string;
+      suggestionTitle: string;
+      supportSubject: string;
+    };
+    success: {
+      bugTitle: string;
+      suggestionTitle: string;
+      supportTitle: string;
+      feedbackMessage: string;
+      supportMessage: string;
+      viewTicketsButton: string;
+      submitMoreButton: string;
+    };
+    summaryLabels: Record<'bug' | 'suggestion' | 'support', string>;
+    summaryPlaceholders: Record<'bug' | 'suggestion' | 'support', string>;
+    severityLabel: string;
+    severityOptions: Record<BugSeverity, string>;
+    suggestionTopicLabel: string;
+    suggestionTopicOptions: Record<SuggestionCategory, string>;
+    messageLabels: Record<'feedback' | 'support', string>;
+    messagePlaceholders: Record<'bug' | 'suggestion' | 'support', string>;
+    emailLabels: Record<'optional' | 'required', string>;
+    emailPlaceholder: string;
+    attachmentsLabel: string;
+    attachmentAction: string;
+    telemetryNotice: string;
+    submitButtons: Record<'submitting' | 'bug' | 'suggestion' | 'support', string>;
+  };
+  tickets: {
+    title: string;
+    submissionSingular: string;
+    submissionPlural: string;
+    backLabel: string;
+    refreshLabel: string;
+    signInError: string;
+    loadError: string;
+    signedOutTitle: string;
+    signedOutMessage: string;
+    loadingMessage: string;
+    emptyTitle: string;
+    emptyMessage: string;
+    typeLabels: Record<'bug' | 'suggestion' | 'ticket', string>;
+    referenceLabel: string;
+    replyNote: string;
+  };
+  newsletter: {
+    validationEmail: string;
+    subscribeError: string;
+    unsubscribeError: string;
+    unsubscribedTitle: string;
+    unsubscribedMessage: string;
+    resubscribeButton: string;
+    subscribedTitle: string;
+    subscribedMessage: string;
+    subscribedEmailLabel: string;
+    manageButton: string;
+    subscribeTitle: string;
+    subscribeDescription: string;
+    manageTitle: string;
+    manageDescription: string;
+    emailLabel: string;
+    useAccountEmail: string;
+    emailPlaceholder: string;
+    nameLabel: string;
+    namePlaceholder: string;
+    frequencyLabel: string;
+    frequencyOptions: Record<'all' | 'weekly' | 'monthly', string>;
+    savingButton: string;
+    savePreferencesButton: string;
+    subscribeButton: string;
+    unsubscribeButton: string;
+  };
+}
+
+export type DeepPartial<T> = T extends readonly unknown[]
+  ? T
+  : T extends object
+    ? { [K in keyof T]?: DeepPartial<T[K]> }
+    : T;
+
+export type EngageWidgetContentOverrides = DeepPartial<EngageWidgetContent>;
 
 export interface CustomLabels {
   launcherTitle?: string;
@@ -131,13 +260,15 @@ export interface FeedbackWidgetProps {
   theme?: WidgetTheme;
   /** Authenticated user details */
   user?: WidgetUser;
-  /** FAQs/help items list */
+  /** FAQs/help items list. Prefer content.faq.items for new integrations. */
   faqs?: FaqItem[];
+  /** All host-facing widget copy and help content. Partial overrides are deep-merged with defaults. */
+  content?: EngageWidgetContentOverrides;
   /** Enabled tabs. Defaults to ['faq', 'feedback', 'newsletter'] */
   enabledTabs?: TabId[];
   /** Initial active tab when drawer opens */
   defaultTab?: TabId;
-  /** Custom text overrides */
+  /** @deprecated Prefer the comprehensive content prop. */
   labels?: CustomLabels;
   /** Primary accent color override (CSS hex or var) */
   accentColor?: string;
@@ -149,6 +280,10 @@ export interface FeedbackWidgetProps {
   onSubmitBug?: (payload: BugReportPayload) => Promise<void> | void;
   /** Callback triggered when a suggestion is submitted */
   onSubmitSuggestion?: (payload: SuggestionPayload) => Promise<void> | void;
+  /** Callback triggered when voting on a community suggestion */
+  onVoteSuggestion?: (suggestionId: string, action: 'upvote' | 'unvote') => Promise<void> | void;
+  /** Allow browsing community suggestions and voting directly in the widget (defaults to true) */
+  enableCommunityRoadmap?: boolean;
   /** Callback triggered when a support ticket is submitted */
   onSubmitTicket?: (payload: TicketPayload) => Promise<void> | void;
   /** Callback triggered when a user subscribes to the newsletter */

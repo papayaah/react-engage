@@ -5,6 +5,7 @@ import { FeedbackWidgetProps } from '../types';
 import { useFeedbackTheme } from '../hooks/useFeedbackTheme';
 import { FeedbackDrawer } from './FeedbackDrawer';
 import { MessageSquare, X } from 'lucide-react';
+import { resolveEngageContent } from '../content';
 
 export const FeedbackWidget: React.FC<FeedbackWidgetProps> = (props) => {
   const {
@@ -23,6 +24,7 @@ export const FeedbackWidget: React.FC<FeedbackWidgetProps> = (props) => {
 
   const [isOpen, setIsOpen] = useState(false);
   const resolvedTheme = useFeedbackTheme(theme);
+  const resolvedContent = resolveEngageContent(props.content, labels);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -52,7 +54,7 @@ export const FeedbackWidget: React.FC<FeedbackWidgetProps> = (props) => {
       data-corners={corners !== 'inherit' ? corners : undefined}
       style={customStyle}
     >
-      {isOpen && <FeedbackDrawer {...props} themeMode={resolvedTheme} onClose={() => setIsOpen(false)} />}
+      {isOpen && <FeedbackDrawer {...props} resolvedContent={resolvedContent} themeMode={resolvedTheme} onClose={() => setIsOpen(false)} />}
 
       {renderTrigger ? (
         renderTrigger({ isOpen, toggle })
@@ -61,10 +63,10 @@ export const FeedbackWidget: React.FC<FeedbackWidgetProps> = (props) => {
           className="rfw-launcher-btn"
           onClick={toggle}
           aria-expanded={isOpen}
-          aria-label={labels?.launcherTitle || 'Help & Feedback'}
+          aria-label={resolvedContent.launcher.title}
         >
           {isOpen ? <X size={18} /> : <MessageSquare size={18} />}
-          <span>{labels?.launcherTitle || 'Help & Feedback'}</span>
+          <span>{resolvedContent.launcher.title}</span>
         </button>
       )}
     </div>
