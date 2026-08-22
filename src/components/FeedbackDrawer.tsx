@@ -35,10 +35,25 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
   onSubmitTicket,
   onSubmitNewsletter,
   enableCommunityRoadmap = true,
+  enabledTabs = ['faq', 'feedback', 'newsletter'],
+  defaultTab,
   onClose,
 }) => {
   const copy = resolvedContent ?? resolveEngageContent(content, labels);
-  const [activeTab, setActiveTab] = useState<'faq' | 'feedback' | 'newsletter'>('faq');
+
+  // The drawer's top-level navigation only exposes these three tabs; the other
+  // TabId values ('bug' | 'suggestion' | 'ticket') are sub-views inside Support.
+  // `enabledTabs` lets a host hide any of them (e.g. drop 'newsletter').
+  const NAV_TABS = ['faq', 'feedback', 'newsletter'] as const;
+  type NavTab = (typeof NAV_TABS)[number];
+  const visibleTabs = NAV_TABS.filter((t) => enabledTabs.includes(t));
+  const isEnabled = (t: NavTab) => visibleTabs.includes(t);
+
+  const initialTab: NavTab =
+    defaultTab && visibleTabs.includes(defaultTab as NavTab)
+      ? (defaultTab as NavTab)
+      : visibleTabs[0] ?? 'faq';
+  const [activeTab, setActiveTab] = useState<NavTab>(initialTab);
   const [supportView, setSupportView] = useState<'new' | 'tickets'>('new');
   const [ticketRefreshKey, setTicketRefreshKey] = useState(0);
   const initialFeedbackCategory: FeedbackCategory = 'bug';
@@ -103,35 +118,41 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
 
       {/* Main navigation */}
       <div className="rfw-nav">
-        <button
-          className="rfw-nav-btn"
-          data-active={activeTab === 'faq'}
-          onClick={() => setActiveTab('faq')}
-        >
-          <HelpCircle size={15} />
-          <span>{copy.tabs.faq}</span>
-        </button>
+        {isEnabled('faq') && (
+          <button
+            className="rfw-nav-btn"
+            data-active={activeTab === 'faq'}
+            onClick={() => setActiveTab('faq')}
+          >
+            <HelpCircle size={15} />
+            <span>{copy.tabs.faq}</span>
+          </button>
+        )}
 
-        <button
-          className="rfw-nav-btn"
-          data-active={activeTab === 'feedback'}
-          onClick={() => {
-            setActiveTab('feedback');
-            setSupportView('new');
-          }}
-        >
-          <MessageSquare size={15} />
-          <span>{copy.tabs.support}</span>
-        </button>
+        {isEnabled('feedback') && (
+          <button
+            className="rfw-nav-btn"
+            data-active={activeTab === 'feedback'}
+            onClick={() => {
+              setActiveTab('feedback');
+              setSupportView('new');
+            }}
+          >
+            <MessageSquare size={15} />
+            <span>{copy.tabs.support}</span>
+          </button>
+        )}
 
-        <button
-          className="rfw-nav-btn"
-          data-active={activeTab === 'newsletter'}
-          onClick={() => setActiveTab('newsletter')}
-        >
-          <Mail size={15} />
-          <span>{copy.tabs.newsletter}</span>
-        </button>
+        {isEnabled('newsletter') && (
+          <button
+            className="rfw-nav-btn"
+            data-active={activeTab === 'newsletter'}
+            onClick={() => setActiveTab('newsletter')}
+          >
+            <Mail size={15} />
+            <span>{copy.tabs.newsletter}</span>
+          </button>
+        )}
       </div>
 
       {/* Body panel content */}
