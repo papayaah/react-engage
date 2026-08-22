@@ -160,8 +160,6 @@ export interface EngageWidgetContent {
       viewTicketsButton: string;
       submitMoreButton: string;
     };
-    summaryLabels: Record<'bug' | 'suggestion' | 'support', string>;
-    summaryPlaceholders: Record<'bug' | 'suggestion' | 'support', string>;
     severityLabel: string;
     severityOptions: Record<BugSeverity, string>;
     suggestionTopicLabel: string;
@@ -174,6 +172,22 @@ export interface EngageWidgetContent {
     attachmentAction: string;
     telemetryNotice: string;
     submitButtons: Record<'submitting' | 'bug' | 'suggestion' | 'support', string>;
+  };
+  suggestions: {
+    headerTitle: string;
+    headerSubtitle: string;
+    createButton: string;
+    sortLabels: Record<'top' | 'recent' | 'roadmap', string>;
+    allTopicsLabel: string;
+    categoryLabels: Record<SuggestionCategory, string>;
+    statusLabels: Record<'under_review' | 'planned' | 'in_progress' | 'completed', string>;
+    statusTooltips: Record<'under_review' | 'planned' | 'in_progress' | 'completed', string>;
+    loadingMessage: string;
+    emptyTitle: string;
+    emptyMessage: string;
+    emptyCreateButton: string;
+    /** Fallback community suggestions shown when no endpoint data is available. Defaults to none. */
+    sampleItems: SuggestionItem[];
   };
   tickets: {
     title: string;

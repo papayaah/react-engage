@@ -592,7 +592,9 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
         return NextResponse.json({ success: true, unsubscribed: true, email: userEmail });
       }
 
-      // Persist in DB if connected
+      // Persist in DB if connected. A swallowed insert error here looks exactly
+      // like a lost ticket: the widget reports success while nothing is stored.
+      // Surface the failure so the caller shows an error instead of faking success.
       if (db) {
         try {
           if (type === 'newsletter' && tables?.subscribers && userEmail) {
@@ -617,6 +619,10 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
           }
         } catch (e) {
           console.error('[Engage API DB Insert Error]:', e);
+          return NextResponse.json(
+            { success: false, error: 'Failed to persist submission' },
+            { status: 500 },
+          );
         }
       }
 

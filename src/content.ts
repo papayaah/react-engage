@@ -42,16 +42,6 @@ export const DEFAULT_ENGAGE_CONTENT: EngageWidgetContent = {
       viewTicketsButton: 'View My Tickets',
       submitMoreButton: 'Submit More Feedback',
     },
-    summaryLabels: {
-      bug: 'Issue Summary (Optional)',
-      suggestion: 'Idea Summary (Optional)',
-      support: 'Subject (Optional)',
-    },
-    summaryPlaceholders: {
-      bug: 'e.g. A chart failed to render after a date change',
-      suggestion: 'e.g. Add another chart display option',
-      support: 'e.g. Question about my account',
-    },
     severityLabel: 'Severity (Optional)',
     severityOptions: {
       low: 'Low - Visual tweak or typo',
@@ -67,7 +57,7 @@ export const DEFAULT_ENGAGE_CONTENT: EngageWidgetContent = {
       integrations: 'Integrations',
       other: 'Other Idea',
     },
-    messageLabels: { feedback: 'Details / Description', support: 'Your Message *' },
+    messageLabels: { feedback: 'Description', support: 'Your Message' },
     messagePlaceholders: {
       bug: 'Describe what happened or the steps to reproduce it...',
       suggestion: 'What problem does this idea solve?',
@@ -84,6 +74,37 @@ export const DEFAULT_ENGAGE_CONTENT: EngageWidgetContent = {
       suggestion: 'Submit Suggestion',
       support: 'Send Support Request',
     },
+  },
+  suggestions: {
+    headerTitle: 'Feature Ideas & Roadmap',
+    headerSubtitle: 'Vote on community suggestions or share your own idea.',
+    createButton: 'New Idea',
+    sortLabels: { top: 'Top Voted', recent: 'Recent', roadmap: 'Roadmap' },
+    allTopicsLabel: 'All Topics',
+    categoryLabels: {
+      new_feature: 'Feature',
+      ui_ux: 'UI / UX',
+      performance: 'Performance',
+      integrations: 'Integrations',
+      other: 'Other',
+    },
+    statusLabels: {
+      under_review: 'Under Review',
+      planned: 'Planned',
+      in_progress: 'In Progress',
+      completed: 'Completed',
+    },
+    statusTooltips: {
+      under_review: 'Under community review',
+      planned: 'Planned for upcoming release',
+      in_progress: 'Currently being built',
+      completed: 'Feature released',
+    },
+    loadingMessage: 'Loading ideas...',
+    emptyTitle: 'No suggestions found',
+    emptyMessage: 'Be the first to suggest a new feature!',
+    emptyCreateButton: 'Suggest an Idea',
+    sampleItems: [],
   },
   tickets: {
     title: 'My tickets',

@@ -30,6 +30,7 @@ interface FeedbackFormTabProps {
   onViewTickets?: () => void;
   enableCommunityRoadmap?: boolean;
   content?: EngageWidgetContent['feedback'];
+  suggestionsContent?: EngageWidgetContent['suggestions'];
 }
 
 export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
@@ -45,6 +46,7 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
   onViewTickets,
   enableCommunityRoadmap = true,
   content = DEFAULT_ENGAGE_CONTENT.feedback,
+  suggestionsContent = DEFAULT_ENGAGE_CONTENT.suggestions,
 }) => {
   const envMeta = useEnvironmentMeta(themeMode);
 
@@ -52,7 +54,6 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
   const [suggestionMode, setSuggestionMode] = useState<'list' | 'create'>('list');
   
   // Shared & specific form fields
-  const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [email, setEmail] = useState(user?.email || '');
   const [severity, setSeverity] = useState<BugSeverity>('medium');
@@ -92,9 +93,8 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
     e.preventDefault();
     setErrorMsg(null);
 
-    // Validation rules:
-    // Support requires email and message.
-    // Bug / Suggestion require at least a title or message.
+    // Validation rules: the description/message is the single required field.
+    // Support additionally requires a reply email.
     if (category === 'support') {
       if (!email.trim() || !email.includes('@')) {
         setErrorMsg(content.validation.invalidEmail);
@@ -105,7 +105,7 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
         return;
       }
     } else {
-      if (!title.trim() && !message.trim()) {
+      if (!message.trim()) {
         setErrorMsg(content.validation.missingSummary);
         return;
       }
@@ -117,8 +117,8 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
       if (category === 'bug') {
         const payload: BugReportPayload = {
           appId,
-          title: title.trim() || content.payloadDefaults.bugTitle,
-          description: message.trim() || title.trim(),
+          title: content.payloadDefaults.bugTitle,
+          description: message.trim(),
           severity,
           user: { ...user, email: email || user?.email },
           attachments,
@@ -128,9 +128,9 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
       } else if (category === 'suggestion') {
         const payload: SuggestionPayload = {
           appId,
-          title: title.trim() || content.payloadDefaults.suggestionTitle,
+          title: content.payloadDefaults.suggestionTitle,
           category: suggestionType,
-          description: message.trim() || title.trim(),
+          description: message.trim(),
           user: { ...user, email: email || user?.email },
           timestamp: new Date().toISOString(),
         };
@@ -138,7 +138,7 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
       } else if (category === 'support') {
         const payload: TicketPayload = {
           appId,
-          subject: title.trim() || content.payloadDefaults.supportSubject,
+          subject: content.payloadDefaults.supportSubject,
           message: message.trim(),
           user: { ...user, email },
           timestamp: new Date().toISOString(),
@@ -199,7 +199,6 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
             className="rfw-btn-secondary"
             onClick={() => {
               setIsSubmitted(false);
-              setTitle('');
               setMessage('');
               setAttachments([]);
             }}
@@ -268,7 +267,7 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
             setSuggestionMode('create');
             setErrorMsg(null);
           }}
-          content={content}
+          content={suggestionsContent}
         />
       ) : (
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -315,21 +314,22 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
         </div>
       )}
 
-      {/* Dynamic Summary/Subject Field */}
+      {/* Required Field: Description / Message (always on top) */}
       <div className="rfw-field">
         <label className="rfw-label">
-          {content.summaryLabels[category]}
+          {category === 'support' ? content.messageLabels.support : content.messageLabels.feedback}{' '}
+          <span style={{ color: 'var(--rfw-accent)' }}>*</span>
         </label>
-        <input
-          type="text"
-          className="rfw-input"
-          placeholder={content.summaryPlaceholders[category]}
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
+        <textarea
+          className="rfw-textarea"
+          placeholder={content.messagePlaceholders[category]}
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          required
         />
       </div>
 
-      {/* Category Specific Dropdown */}
+      {/* Optional: Category Specific Dropdown */}
       {category === 'bug' && (
         <div className="rfw-field">
           <label className="rfw-label">{content.severityLabel}</label>
@@ -363,21 +363,7 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
         </div>
       )}
 
-      {/* Message / Description Area */}
-      <div className="rfw-field">
-        <label className="rfw-label">
-          {category === 'support' ? content.messageLabels.support : content.messageLabels.feedback}
-        </label>
-        <textarea
-          className="rfw-textarea"
-          placeholder={content.messagePlaceholders[category]}
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          required={category === 'support'}
-        />
-      </div>
-
-      {/* Email Field - Required for Support, Optional for Bug & Suggestion */}
+      {/* Optional (Required for Support): Reply Email */}
       <div className="rfw-field">
         <label className="rfw-label">
           {category === 'support' ? content.emailLabels.required : content.emailLabels.optional}

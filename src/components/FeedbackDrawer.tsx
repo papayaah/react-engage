@@ -153,6 +153,7 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
                 onViewTickets={() => setSupportView('tickets')}
                 enableCommunityRoadmap={enableCommunityRoadmap}
                 content={copy.feedback}
+                suggestionsContent={copy.suggestions}
               />
             ) : (
               <MyTicketsTab

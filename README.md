@@ -79,6 +79,8 @@ The typed `EngageWidgetContent` contract covers:
 - FAQ items, search, empty state, categories, and article links
 - bug, suggestion, and support form labels, placeholders, validation, success,
   payload fallback titles, option labels, and buttons
+- community roadmap header, sort/category filters, status badges, empty state,
+  and optional `sampleItems` shown when no endpoint data is available
 - ticket list labels, loading/errors, empty states, and reply text
 - newsletter form, confirmation states, frequency options, and actions
 
@@ -92,9 +94,25 @@ import type { EngageWidgetContentOverrides } from '@reactkits.dev/react-engage';
 export const engageContent = {
   tabs: { faq: 'Guides' },
   feedback: {
-    summaryPlaceholders: {
-      bug: 'e.g. The invoice preview is blank',
+    messagePlaceholders: {
+      bug: 'e.g. The invoice preview is blank after I change the date',
     },
+  },
+  suggestions: {
+    headerTitle: 'Product Roadmap',
+    // Seed the roadmap until your endpoint returns data (defaults to none):
+    sampleItems: [
+      {
+        id: 'seed_1',
+        appId: 'my-app',
+        title: 'Slack notifications',
+        description: 'Notify a channel when an invoice is paid.',
+        category: 'integrations',
+        status: 'planned',
+        upvotes: 12,
+        createdAt: '2026-01-01T00:00:00.000Z',
+      },
+    ],
   },
 } satisfies EngageWidgetContentOverrides;
 ```

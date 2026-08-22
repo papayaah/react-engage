@@ -9,7 +9,7 @@ interface SuggestionListProps {
   endpointUrl?: string;
   onVoteSuggestion?: (suggestionId: string, action: 'upvote' | 'unvote') => Promise<void> | void;
   onCreateNew: () => void;
-  content?: EngageWidgetContent['feedback'];
+  content?: EngageWidgetContent['suggestions'];
 }
 
 export const SuggestionList: React.FC<SuggestionListProps> = ({
@@ -18,7 +18,7 @@ export const SuggestionList: React.FC<SuggestionListProps> = ({
   endpointUrl,
   onVoteSuggestion,
   onCreateNew,
-  content: _content = DEFAULT_ENGAGE_CONTENT.feedback,
+  content = DEFAULT_ENGAGE_CONTENT.suggestions,
 }) => {
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -61,42 +61,8 @@ export const SuggestionList: React.FC<SuggestionListProps> = ({
       console.log('[Engage] Failed to fetch suggestions from endpoint. Using local state.');
     }
 
-    // Default sample community suggestions if empty
-    setSuggestions([
-      {
-        id: 'sugg_1',
-        appId,
-        title: 'Dark / Light Mode Scheduled Automation',
-        description: 'Auto switch theme based on sunrise/sunset or system OS settings.',
-        category: 'ui_ux',
-        status: 'planned',
-        upvotes: 18,
-        hasVoted: false,
-        createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
-      },
-      {
-        id: 'sugg_2',
-        appId,
-        title: 'Export Trade Review Reports to PDF / Markdown',
-        description: 'Allow downloading full journal daily notes and AI trade reviews.',
-        category: 'new_feature',
-        status: 'in_progress',
-        upvotes: 24,
-        hasVoted: false,
-        createdAt: new Date(Date.now() - 3600000 * 48).toISOString(),
-      },
-      {
-        id: 'sugg_3',
-        appId,
-        title: 'Custom Hotkeys for Fast Chart Timeframe Switching',
-        description: 'Keyboard shortcuts (e.g. 1, 5, 15, D) to quickly switch charts.',
-        category: 'ui_ux',
-        status: 'under_review',
-        upvotes: 9,
-        hasVoted: false,
-        createdAt: new Date(Date.now() - 3600000 * 12).toISOString(),
-      },
-    ]);
+    // Fall back to host-provided sample suggestions (none by default)
+    setSuggestions(content.sampleItems);
     setIsLoading(false);
   };
 
@@ -186,45 +152,33 @@ export const SuggestionList: React.FC<SuggestionListProps> = ({
     switch (status) {
       case 'planned':
         return (
-          <span className="rfw-status-pill rfw-status-planned" title="Planned for upcoming release">
-            <Clock size={11} /> Planned
+          <span className="rfw-status-pill rfw-status-planned" title={content.statusTooltips.planned}>
+            <Clock size={11} /> {content.statusLabels.planned}
           </span>
         );
       case 'in_progress':
         return (
-          <span className="rfw-status-pill rfw-status-progress" title="Currently being built">
-            <Hammer size={11} /> In Progress
+          <span className="rfw-status-pill rfw-status-progress" title={content.statusTooltips.in_progress}>
+            <Hammer size={11} /> {content.statusLabels.in_progress}
           </span>
         );
       case 'completed':
         return (
-          <span className="rfw-status-pill rfw-status-completed" title="Feature released">
-            <CheckCircle2 size={11} /> Completed
+          <span className="rfw-status-pill rfw-status-completed" title={content.statusTooltips.completed}>
+            <CheckCircle2 size={11} /> {content.statusLabels.completed}
           </span>
         );
       default:
         return (
-          <span className="rfw-status-pill rfw-status-review" title="Under community review">
-            Under Review
+          <span className="rfw-status-pill rfw-status-review" title={content.statusTooltips.under_review}>
+            {content.statusLabels.under_review}
           </span>
         );
     }
   };
 
-  const getCategoryLabel = (cat: string) => {
-    switch (cat) {
-      case 'ui_ux':
-        return 'UI/UX';
-      case 'performance':
-        return 'Performance';
-      case 'integrations':
-        return 'Integrations';
-      case 'other':
-        return 'Other';
-      default:
-        return 'Feature';
-    }
-  };
+  const getCategoryLabel = (cat: string) =>
+    content.categoryLabels[cat as keyof typeof content.categoryLabels] ?? content.categoryLabels.new_feature;
 
   return (
     <div className="rfw-suggestion-list-container">
@@ -233,10 +187,10 @@ export const SuggestionList: React.FC<SuggestionListProps> = ({
         <div>
           <div className="rfw-sugg-title-row">
             <Lightbulb size={17} className="rfw-sugg-icon" />
-            <strong style={{ fontSize: 14 }}>Feature Ideas & Roadmap</strong>
+            <strong style={{ fontSize: 14 }}>{content.headerTitle}</strong>
           </div>
           <p className="rfw-sugg-subtitle">
-            Vote on community suggestions or share your own idea.
+            {content.headerSubtitle}
           </p>
         </div>
 
@@ -246,7 +200,7 @@ export const SuggestionList: React.FC<SuggestionListProps> = ({
           className="rfw-btn-submit rfw-sugg-create-btn"
         >
           <Plus size={14} />
-          <span>New Idea</span>
+          <span>{content.createButton}</span>
         </button>
       </div>
 
@@ -259,7 +213,7 @@ export const SuggestionList: React.FC<SuggestionListProps> = ({
             onClick={() => setFilterSort('top')}
           >
             <Sparkles size={12} />
-            <span>Top Voted</span>
+            <span>{content.sortLabels.top}</span>
           </button>
           <button
             type="button"
@@ -267,7 +221,7 @@ export const SuggestionList: React.FC<SuggestionListProps> = ({
             onClick={() => setFilterSort('recent')}
           >
             <Clock size={12} />
-            <span>Recent</span>
+            <span>{content.sortLabels.recent}</span>
           </button>
           <button
             type="button"
@@ -275,7 +229,7 @@ export const SuggestionList: React.FC<SuggestionListProps> = ({
             onClick={() => setFilterSort('roadmap')}
           >
             <Hammer size={12} />
-            <span>Roadmap</span>
+            <span>{content.sortLabels.roadmap}</span>
           </button>
         </div>
 
@@ -285,25 +239,25 @@ export const SuggestionList: React.FC<SuggestionListProps> = ({
           className="rfw-sugg-cat-select"
           aria-label="Filter by category"
         >
-          <option value="all">All Topics</option>
-          <option value="new_feature">New Features</option>
-          <option value="ui_ux">UI / UX</option>
-          <option value="performance">Performance</option>
-          <option value="integrations">Integrations</option>
-          <option value="other">Other</option>
+          <option value="all">{content.allTopicsLabel}</option>
+          <option value="new_feature">{content.categoryLabels.new_feature}</option>
+          <option value="ui_ux">{content.categoryLabels.ui_ux}</option>
+          <option value="performance">{content.categoryLabels.performance}</option>
+          <option value="integrations">{content.categoryLabels.integrations}</option>
+          <option value="other">{content.categoryLabels.other}</option>
         </select>
       </div>
 
       {/* Suggestions Feed */}
       <div className="rfw-sugg-feed">
         {isLoading ? (
-          <div className="rfw-sugg-empty">Loading ideas...</div>
+          <div className="rfw-sugg-empty">{content.loadingMessage}</div>
         ) : filteredSuggestions.length === 0 ? (
           <div className="rfw-sugg-empty">
             <Lightbulb size={24} style={{ opacity: 0.5, marginBottom: 8 }} />
-            <p style={{ margin: 0, fontWeight: 600 }}>No suggestions found</p>
+            <p style={{ margin: 0, fontWeight: 600 }}>{content.emptyTitle}</p>
             <p style={{ fontSize: 12, margin: '4px 0 12px 0', opacity: 0.8 }}>
-              Be the first to suggest a new feature!
+              {content.emptyMessage}
             </p>
             <button
               type="button"
@@ -311,7 +265,7 @@ export const SuggestionList: React.FC<SuggestionListProps> = ({
               className="rfw-btn-submit"
               style={{ width: 'auto', padding: '6px 14px', fontSize: 12 }}
             >
-              <Plus size={13} /> Suggest an Idea
+              <Plus size={13} /> {content.emptyCreateButton}
             </button>
           </div>
         ) : (
