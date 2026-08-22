@@ -56,7 +56,7 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
   // Shared & specific form fields
   const [message, setMessage] = useState('');
   const [email, setEmail] = useState(user?.email || '');
-  const [severity, setSeverity] = useState<BugSeverity>('medium');
+  const [severity, setSeverity] = useState<BugSeverity>('low');
   const [suggestionType, setSuggestionType] = useState<SuggestionCategory>('new_feature');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isDragging, setIsDragging] = useState(false);
