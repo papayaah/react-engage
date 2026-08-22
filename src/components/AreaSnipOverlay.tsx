@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { toCanvas } from 'html-to-image';
 import { Attachment } from '../types';
 import { Crop, X, Loader2 } from 'lucide-react';
@@ -34,6 +35,14 @@ export const AreaSnipOverlay: React.FC<AreaSnipOverlayProps> = ({ onCapture, onC
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onCancel]);
+
+  // Hide the widget (launcher + drawer) for the duration of the capture. Otherwise
+  // it stays on top of the page during selection — full-screen on mobile, so the
+  // user can't see or reach the area they want — and would land in the screenshot.
+  useEffect(() => {
+    document.body.classList.add('rfw-snip-capturing');
+    return () => document.body.classList.remove('rfw-snip-capturing');
+  }, []);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (isProcessing) return;
@@ -141,7 +150,9 @@ export const AreaSnipOverlay: React.FC<AreaSnipOverlayProps> = ({ onCapture, onC
     };
   }, [handleMouseMove, handleMouseUp]);
 
-  return (
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <div
       ref={overlayRef}
       className="rfw-snip-overlay"
@@ -216,6 +227,7 @@ export const AreaSnipOverlay: React.FC<AreaSnipOverlayProps> = ({ onCapture, onC
           </div>
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   );
 };

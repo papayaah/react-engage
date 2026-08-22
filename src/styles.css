@@ -434,6 +434,14 @@
   animation: rfw-fade-in 0.15s ease;
 }
 
+/* While an area capture is in progress the overlay is portaled to <body>, so we
+   can hide the widget (launcher + drawer) without hiding the overlay. This keeps
+   it out of the shot and, on mobile, stops the full-screen drawer from covering
+   the very content the user is trying to capture. */
+body.rfw-snip-capturing .rfw-container {
+  display: none !important;
+}
+
 .rfw-snip-toolbar {
   position: fixed;
   top: 20px;
