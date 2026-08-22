@@ -123,6 +123,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
   const [isSendingReply, setIsSendingReply] = useState(false);
   const [replyStatus, setReplyStatus] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [globalSearch, setGlobalSearch] = useState('');
 
   // Template state
   const startingTemplates = initialTemplates.length > 0 ? initialTemplates : DEFAULT_TEMPLATES;
@@ -313,6 +314,41 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
 
   const filteredTickets = tickets.filter((t) => filterType === 'all' || t.type === filterType);
 
+  // Universal client-side search across every loaded record (tickets, suggestions,
+  // subscribers). When active, the content area shows grouped results instead of tabs.
+  const globalQuery = globalSearch.trim().toLowerCase();
+  const isSearching = globalQuery.length > 0;
+  const matchesQuery = (...values: Array<string | null | undefined>) =>
+    values.some((v) => typeof v === 'string' && v.toLowerCase().includes(globalQuery));
+  const searchTickets = isSearching
+    ? tickets.filter((t) => matchesQuery(t.message, t.subject, t.userEmail, t.userName, t.category, t.type))
+    : [];
+  const searchSuggestions = isSearching
+    ? suggestions.filter((s) => matchesQuery(s.title, s.description, s.category, s.status, s.userEmail))
+    : [];
+  const searchSubscribers = isSearching
+    ? subscribers.filter((s) => matchesQuery(s.email, s.name))
+    : [];
+  const searchTotal = searchTickets.length + searchSuggestions.length + searchSubscribers.length;
+
+  const openTicket = (t: TicketItem) => {
+    setSelectedTicket(t);
+    setFilterType('all');
+    setActiveTab('inbox');
+    setGlobalSearch('');
+  };
+  const openSuggestion = (query: string) => {
+    setSuggestionSearch(query);
+    setActiveTab('suggestions');
+    setGlobalSearch('');
+  };
+  const openSubscriber = (query: string) => {
+    setSubscriberSearch(query);
+    setAudienceSubTab('subscribers');
+    setActiveTab('newsletter');
+    setGlobalSearch('');
+  };
+
   return (
     <div
       className="rfw-admin-panel"
@@ -355,7 +391,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
               color: 'var(--muted, #64748b)',
             }}
           >
-            v0.3.0
+            v0.4.1
           </span>
         </div>
 
@@ -453,10 +489,175 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
         </div>
       </div>
 
+      {/* Universal Search Bar */}
+      <div style={{ padding: '10px 20px', borderBottom: '1px solid var(--card-border, #e2e8f0)', backgroundColor: 'var(--background, #ffffff)' }}>
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+          <Search size={15} style={{ position: 'absolute', left: 10, color: 'var(--muted, #64748b)', pointerEvents: 'none' }} />
+          <input
+            type="text"
+            value={globalSearch}
+            onChange={(e) => setGlobalSearch(e.target.value)}
+            placeholder="Search tickets, suggestions, and subscribers..."
+            aria-label="Search all engage records"
+            style={{
+              width: '100%',
+              padding: '8px 32px',
+              fontSize: 13,
+              borderRadius: 'var(--radius-sm, 0px)',
+              border: '1px solid var(--card-border, #cbd5e1)',
+              background: 'var(--card-bg, #ffffff)',
+              color: 'var(--foreground, #0f172a)',
+              outline: 'none',
+            }}
+          />
+          {globalSearch && (
+            <button
+              type="button"
+              onClick={() => setGlobalSearch('')}
+              title="Clear search"
+              aria-label="Clear search"
+              style={{ position: 'absolute', right: 8, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted, #64748b)', display: 'flex' }}
+            >
+              <X size={15} />
+            </button>
+          )}
+        </div>
+        {isSearching && (
+          <div style={{ fontSize: 11, color: 'var(--muted, #64748b)', marginTop: 6 }}>
+            {searchTotal} result{searchTotal === 1 ? '' : 's'} for &ldquo;{globalSearch.trim()}&rdquo;
+          </div>
+        )}
+      </div>
+
       {/* Main Content Area */}
       <div className="rfw-admin-content" style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+        {/* GLOBAL SEARCH RESULTS (replaces tab content while searching) */}
+        {isSearching && (
+          <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
+            {searchTotal === 0 ? (
+              <div style={{ textAlign: 'center', color: 'var(--muted, #64748b)', fontSize: 13, padding: 40 }}>
+                No matches for &ldquo;{globalSearch.trim()}&rdquo;.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+                {searchTickets.length > 0 && (
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted, #64748b)', marginBottom: 8, letterSpacing: 0.4 }}>
+                      Support Inbox ({searchTickets.length})
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {searchTickets.map((t) => (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => openTicket(t)}
+                          style={{
+                            textAlign: 'left',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 3,
+                            padding: '10px 12px',
+                            border: '1px solid var(--card-border, #e2e8f0)',
+                            borderRadius: 'var(--radius-sm, 0px)',
+                            background: 'var(--card-bg, #ffffff)',
+                            color: 'var(--foreground, #0f172a)',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', padding: '1px 6px', borderRadius: 'var(--radius-sm, 0px)', backgroundColor: t.type === 'bug' ? 'rgba(239,68,68,0.15)' : t.type === 'ticket' ? 'rgba(59,130,246,0.15)' : 'rgba(16,185,129,0.15)', color: t.type === 'bug' ? '#ef4444' : t.type === 'ticket' ? '#2563eb' : '#059669' }}>{t.type}</span>
+                            <span style={{ fontSize: 11, color: 'var(--muted, #64748b)' }}>{t.userEmail || 'Anonymous'}</span>
+                          </div>
+                          <div style={{ fontSize: 13, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                            {t.message?.trim() || t.subject}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {searchSuggestions.length > 0 && (
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted, #64748b)', marginBottom: 8, letterSpacing: 0.4 }}>
+                      Feature Roadmap ({searchSuggestions.length})
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {searchSuggestions.map((s) => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => openSuggestion(globalSearch.trim())}
+                          style={{
+                            textAlign: 'left',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 3,
+                            padding: '10px 12px',
+                            border: '1px solid var(--card-border, #e2e8f0)',
+                            borderRadius: 'var(--radius-sm, 0px)',
+                            background: 'var(--card-bg, #ffffff)',
+                            color: 'var(--foreground, #0f172a)',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <Lightbulb size={12} style={{ color: '#eab308' }} />
+                            <span style={{ fontSize: 13, fontWeight: 600 }}>{s.title}</span>
+                            {typeof s.upvotes !== 'undefined' && (
+                              <span style={{ fontSize: 11, color: 'var(--muted, #64748b)' }}>▲ {s.upvotes}</span>
+                            )}
+                          </div>
+                          {s.description && (
+                            <div style={{ fontSize: 12, color: 'var(--muted, #64748b)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                              {s.description}
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {searchSubscribers.length > 0 && (
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted, #64748b)', marginBottom: 8, letterSpacing: 0.4 }}>
+                      Subscribers ({searchSubscribers.length})
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {searchSubscribers.map((s, i) => (
+                        <button
+                          key={s.id || s.email || i}
+                          type="button"
+                          onClick={() => openSubscriber(globalSearch.trim())}
+                          style={{
+                            textAlign: 'left',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            padding: '10px 12px',
+                            border: '1px solid var(--card-border, #e2e8f0)',
+                            borderRadius: 'var(--radius-sm, 0px)',
+                            background: 'var(--card-bg, #ffffff)',
+                            color: 'var(--foreground, #0f172a)',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <User size={13} style={{ color: 'var(--muted, #64748b)' }} />
+                          <span style={{ fontSize: 13 }}>{s.email}</span>
+                          {s.name && <span style={{ fontSize: 12, color: 'var(--muted, #64748b)' }}>· {s.name}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* TAB 1: SUPPORT INBOX */}
-        {activeTab === 'inbox' && (
+        {!isSearching && activeTab === 'inbox' && (
           <>
             {/* Left Sidebar List */}
             <div
@@ -863,7 +1064,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
         )}
 
         {/* TAB: FEATURE ROADMAP & COMMUNITY SUGGESTIONS */}
-        {activeTab === 'suggestions' && (
+        {!isSearching && activeTab === 'suggestions' && (
           <div style={{ flex: 1, padding: 24, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
               <div>
@@ -1070,7 +1271,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
         )}
 
         {/* TAB 3: EMAIL TEMPLATES */}
-        {activeTab === 'templates' && (
+        {!isSearching && activeTab === 'templates' && (
           <div style={{ flex: 1, display: 'flex', padding: 20, gap: 20 }}>
             {/* Template Selector list */}
             <div style={{ width: 240, borderRight: '1px solid var(--card-border, #e2e8f0)', paddingRight: 16 }}>
@@ -1198,7 +1399,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
         )}
 
         {/* TAB 3: AUDIENCE & NEWSLETTERS */}
-        {activeTab === 'newsletter' && (
+        {!isSearching && activeTab === 'newsletter' && (
           <div style={{ flex: 1, padding: 24, maxWidth: 780, margin: '0 auto', width: '100%', overflowY: 'auto' }}>
             {/* Sub-Nav Pill Bar */}
             <div
