@@ -326,7 +326,7 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
                   border: 'none',
                   color: 'var(--rfw-accent)',
                   fontSize: 12,
-                  fontWeight: 600,
+                  fontWeight: 400,
                   cursor: 'pointer',
                   padding: 0,
                   display: 'flex',

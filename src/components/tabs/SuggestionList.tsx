@@ -255,7 +255,7 @@ export const SuggestionList: React.FC<SuggestionListProps> = ({
         ) : filteredSuggestions.length === 0 ? (
           <div className="rfw-sugg-empty">
             <Lightbulb size={24} style={{ opacity: 0.5, marginBottom: 8 }} />
-            <p style={{ margin: 0, fontWeight: 600 }}>{content.emptyTitle}</p>
+            <p style={{ margin: 0, fontWeight: 400 }}>{content.emptyTitle}</p>
             <p style={{ fontSize: 12, margin: '4px 0 12px 0', opacity: 0.8 }}>
               {content.emptyMessage}
             </p>

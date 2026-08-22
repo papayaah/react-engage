@@ -381,7 +381,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#10b981', flexShrink: 0 }} />
-          <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--foreground)' }}>Engage Admin Dashboard</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 400, margin: 0, color: 'var(--foreground)' }}>Engage Admin Dashboard</h2>
           <span
             style={{
               fontSize: 11,
@@ -542,7 +542,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
               <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
                 {searchTickets.length > 0 && (
                   <div>
-                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted, #64748b)', marginBottom: 8, letterSpacing: 0.4 }}>
+                    <div style={{ fontSize: 11, fontWeight: 400, textTransform: 'uppercase', color: 'var(--muted, #64748b)', marginBottom: 8, letterSpacing: 0.4 }}>
                       Support Inbox ({searchTickets.length})
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -565,7 +565,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', padding: '1px 6px', borderRadius: 'var(--radius-sm, 0px)', backgroundColor: t.type === 'bug' ? 'rgba(239,68,68,0.15)' : t.type === 'ticket' ? 'rgba(59,130,246,0.15)' : 'rgba(16,185,129,0.15)', color: t.type === 'bug' ? '#ef4444' : t.type === 'ticket' ? '#2563eb' : '#059669' }}>{t.type}</span>
+                            <span style={{ fontSize: 10, fontWeight: 400, textTransform: 'uppercase', padding: '1px 6px', borderRadius: 'var(--radius-sm, 0px)', backgroundColor: t.type === 'bug' ? 'rgba(239,68,68,0.15)' : t.type === 'ticket' ? 'rgba(59,130,246,0.15)' : 'rgba(16,185,129,0.15)', color: t.type === 'bug' ? '#ef4444' : t.type === 'ticket' ? '#2563eb' : '#059669' }}>{t.type}</span>
                             <span style={{ fontSize: 11, color: 'var(--muted, #64748b)' }}>{t.userEmail || 'Anonymous'}</span>
                           </div>
                           <div style={{ fontSize: 13, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
@@ -579,7 +579,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
 
                 {searchSuggestions.length > 0 && (
                   <div>
-                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted, #64748b)', marginBottom: 8, letterSpacing: 0.4 }}>
+                    <div style={{ fontSize: 11, fontWeight: 400, textTransform: 'uppercase', color: 'var(--muted, #64748b)', marginBottom: 8, letterSpacing: 0.4 }}>
                       Feature Roadmap ({searchSuggestions.length})
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -603,7 +603,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <Lightbulb size={12} style={{ color: '#eab308' }} />
-                            <span style={{ fontSize: 13, fontWeight: 600 }}>{s.title}</span>
+                            <span style={{ fontSize: 13, fontWeight: 400 }}>{s.title}</span>
                             {typeof s.upvotes !== 'undefined' && (
                               <span style={{ fontSize: 11, color: 'var(--muted, #64748b)' }}>▲ {s.upvotes}</span>
                             )}
@@ -621,7 +621,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
 
                 {searchSubscribers.length > 0 && (
                   <div>
-                    <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted, #64748b)', marginBottom: 8, letterSpacing: 0.4 }}>
+                    <div style={{ fontSize: 11, fontWeight: 400, textTransform: 'uppercase', color: 'var(--muted, #64748b)', marginBottom: 8, letterSpacing: 0.4 }}>
                       Subscribers ({searchSubscribers.length})
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -741,7 +741,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                         <span
                           style={{
                             fontSize: 10,
-                            fontWeight: 700,
+                            fontWeight: 400,
                             textTransform: 'uppercase',
                             padding: '2px 6px',
                             borderRadius: 'var(--radius-sm, 0px)',
@@ -764,7 +764,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                       <div
                         style={{
                           fontSize: 13,
-                          fontWeight: 600,
+                          fontWeight: 400,
                           color: 'var(--foreground, #0f172a)',
                           display: '-webkit-box',
                           WebkitLineClamp: 2,
@@ -789,7 +789,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                 <>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                     <div>
-                      <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 6px 0', color: 'var(--foreground, #0f172a)' }}>
+                      <h3 style={{ fontSize: 18, fontWeight: 400, margin: '0 0 6px 0', color: 'var(--foreground, #0f172a)' }}>
                         {selectedTicket.subject || `Submission #${selectedTicket.id}`}
                       </h3>
                       <div style={{ fontSize: 12, color: 'var(--muted, #64748b)', display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -809,7 +809,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                         borderRadius: 'var(--radius-sm, 0px)',
                         background: selectedTicket.status === 'resolved' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(234, 179, 8, 0.15)',
                         color: selectedTicket.status === 'resolved' ? '#059669' : '#d97706',
-                        fontWeight: 600,
+                        fontWeight: 400,
                       }}
                     >
                       {selectedTicket.status.toUpperCase()}
@@ -870,7 +870,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                       <div
                         style={{
                           fontSize: 13,
-                          fontWeight: 600,
+                          fontWeight: 400,
                           color: 'var(--foreground, #0f172a)',
                           marginBottom: 8,
                           display: 'flex',
@@ -992,7 +992,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
 
                   {/* Reply Editor Form */}
                   <form onSubmit={handleSendReply} style={{ marginTop: 'auto' }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: 'var(--foreground, #0f172a)' }}>
+                    <div style={{ fontSize: 13, fontWeight: 400, marginBottom: 8, color: 'var(--foreground, #0f172a)' }}>
                       Reply to User via Email ({selectedTicket.userEmail || 'No email specified'})
                     </div>
                     {replyStatus && (
@@ -1039,7 +1039,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                           backgroundColor: 'var(--accent, #3b82f6)',
                           color: '#ffffff',
                           border: 'none',
-                          fontWeight: 600,
+                          fontWeight: 400,
                           fontSize: 13,
                           cursor: 'pointer',
                           display: 'flex',
@@ -1068,7 +1068,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
           <div style={{ flex: 1, padding: 24, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
               <div>
-                <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 4px 0', color: 'var(--foreground, #0f172a)' }}>
+                <h3 style={{ fontSize: 18, fontWeight: 400, margin: '0 0 4px 0', color: 'var(--foreground, #0f172a)' }}>
                   💡 Community Feature Roadmap & Upvotes
                 </h3>
                 <p style={{ fontSize: 13, color: 'var(--muted, #64748b)', margin: 0 }}>
@@ -1079,12 +1079,12 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
               {/* Stats Counters */}
               <div style={{ display: 'flex', gap: 12 }}>
                 <div style={{ padding: '8px 14px', borderRadius: 8, background: 'var(--muted-bg, #f8fafc)', border: '1px solid var(--card-border, #e2e8f0)', textAlign: 'center' }}>
-                  <div style={{ fontSize: 11, color: 'var(--muted, #64748b)', fontWeight: 600 }}>Total Ideas</div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--foreground, #0f172a)' }}>{suggestions.length}</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted, #64748b)', fontWeight: 400 }}>Total Ideas</div>
+                  <div style={{ fontSize: 16, fontWeight: 400, color: 'var(--foreground, #0f172a)' }}>{suggestions.length}</div>
                 </div>
                 <div style={{ padding: '8px 14px', borderRadius: 8, background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)', textAlign: 'center' }}>
-                  <div style={{ fontSize: 11, color: '#3b82f6', fontWeight: 600 }}>Total Upvotes</div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: '#3b82f6' }}>
+                  <div style={{ fontSize: 11, color: '#3b82f6', fontWeight: 400 }}>Total Upvotes</div>
+                  <div style={{ fontSize: 16, fontWeight: 400, color: '#3b82f6' }}>
                     {suggestions.reduce((acc, curr) => acc + (Number(curr.upvotes) || 0), 0)}
                   </div>
                 </div>
@@ -1182,7 +1182,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                                 borderRadius: 12,
                                 backgroundColor: 'rgba(59, 130, 246, 0.12)',
                                 color: '#2563eb',
-                                fontWeight: 700,
+                                fontWeight: 400,
                                 fontSize: 12,
                               }}
                             >
@@ -1192,7 +1192,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
 
                           {/* Title & Description */}
                           <td style={{ padding: '12px 14px' }}>
-                            <div style={{ fontWeight: 600, color: 'var(--foreground, #0f172a)', marginBottom: 2 }}>
+                            <div style={{ fontWeight: 400, color: 'var(--foreground, #0f172a)', marginBottom: 2 }}>
                               {sugg.title}
                             </div>
                             <div style={{ color: 'var(--muted, #64748b)', fontSize: 12, lineHeight: 1.4 }}>
@@ -1205,7 +1205,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                             <span
                               style={{
                                 fontSize: 11,
-                                fontWeight: 600,
+                                fontWeight: 400,
                                 padding: '2px 8px',
                                 borderRadius: 6,
                                 backgroundColor: 'var(--muted-bg, #f1f5f9)',
@@ -1250,7 +1250,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                                     : sugg.status === 'planned'
                                     ? '#9333ea'
                                     : 'var(--foreground, #0f172a)',
-                                fontWeight: 600,
+                                fontWeight: 400,
                                 fontSize: 12,
                                 cursor: 'pointer',
                               }}
@@ -1275,7 +1275,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
           <div style={{ flex: 1, display: 'flex', padding: 20, gap: 20 }}>
             {/* Template Selector list */}
             <div style={{ width: 240, borderRight: '1px solid var(--card-border, #e2e8f0)', paddingRight: 16 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12, color: 'var(--foreground, #0f172a)' }}>
+              <div style={{ fontSize: 13, fontWeight: 400, marginBottom: 12, color: 'var(--foreground, #0f172a)' }}>
                 System Email Templates
               </div>
               {templates.map((tmpl) => (
@@ -1301,7 +1301,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
             {/* Template Editor */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--foreground, #0f172a)' }}>
+                <h3 style={{ fontSize: 16, fontWeight: 400, margin: 0, color: 'var(--foreground, #0f172a)' }}>
                   Editing: {templates.find((t) => t.id === selectedTemplateId)?.name}
                 </h3>
                 <button
@@ -1312,7 +1312,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                     backgroundColor: '#10b981',
                     color: '#ffffff',
                     border: 'none',
-                    fontWeight: 600,
+                    fontWeight: 400,
                     fontSize: 13,
                     cursor: 'pointer',
                   }}
@@ -1420,7 +1420,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                   borderRadius: 'var(--radius-sm, 0px)',
                   border: 'none',
                   fontSize: 13,
-                  fontWeight: 600,
+                  fontWeight: 400,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -1442,7 +1442,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                   borderRadius: 'var(--radius-sm, 0px)',
                   border: 'none',
                   fontSize: 13,
-                  fontWeight: 600,
+                  fontWeight: 400,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -1464,7 +1464,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                   borderRadius: 'var(--radius-sm, 0px)',
                   border: 'none',
                   fontSize: 13,
-                  fontWeight: 600,
+                  fontWeight: 400,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -1482,7 +1482,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
             {/* SUB-VIEW 1: DISPATCH BROADCAST */}
             {audienceSubTab === 'broadcast' && (
               <div>
-                <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 6px 0', color: 'var(--foreground, #0f172a)' }}>
+                <h3 style={{ fontSize: 18, fontWeight: 400, margin: '0 0 6px 0', color: 'var(--foreground, #0f172a)' }}>
                   Dispatch Newsletter Broadcast
                 </h3>
                 <p style={{ fontSize: 13, color: 'var(--muted, #64748b)', margin: '0 0 16px 0' }}>
@@ -1500,10 +1500,10 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground, #0f172a)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ fontSize: 13, fontWeight: 400, color: 'var(--foreground, #0f172a)', display: 'flex', alignItems: 'center', gap: 6 }}>
                       <Mail size={15} style={{ color: 'var(--accent, #3b82f6)' }} />
                       <span>Target Audience:</span>
-                      <span style={{ color: '#10b981', fontWeight: 700 }}>
+                      <span style={{ color: '#10b981', fontWeight: 400 }}>
                         {subscribers.length > 0 ? subscribers.length : tickets.filter((t) => t.userEmail).length} Opted-in Subscribers
                       </span>
                     </div>
@@ -1546,7 +1546,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                               onClick={() => setAudienceSubTab('subscribers')}
                               style={{
                                 fontSize: 11,
-                                fontWeight: 600,
+                                fontWeight: 400,
                                 padding: '3px 10px',
                                 borderRadius: 'var(--radius-sm, 0px)',
                                 backgroundColor: 'var(--accent, #3b82f6)',
@@ -1572,7 +1572,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
 
                 <form onSubmit={handleSendBroadcast} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <div>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground, #0f172a)', display: 'block', marginBottom: 6 }}>
+                    <label style={{ fontSize: 12, fontWeight: 400, color: 'var(--foreground, #0f172a)', display: 'block', marginBottom: 6 }}>
                       Email Subject
                     </label>
                     <input
@@ -1594,7 +1594,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                   </div>
 
                   <div>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground, #0f172a)', display: 'block', marginBottom: 6 }}>
+                    <label style={{ fontSize: 12, fontWeight: 400, color: 'var(--foreground, #0f172a)', display: 'block', marginBottom: 6 }}>
                       Message Content / Release Notes
                     </label>
                     <textarea
@@ -1626,7 +1626,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                       backgroundColor: '#10b981',
                       color: '#ffffff',
                       border: 'none',
-                      fontWeight: 700,
+                      fontWeight: 400,
                       fontSize: 14,
                       cursor: 'pointer',
                       display: 'flex',
@@ -1647,7 +1647,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                   <div>
-                    <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 4px 0', color: 'var(--foreground, #0f172a)' }}>
+                    <h3 style={{ fontSize: 18, fontWeight: 400, margin: '0 0 4px 0', color: 'var(--foreground, #0f172a)' }}>
                       Opted-in Subscribers Directory
                     </h3>
                     <p style={{ fontSize: 13, color: 'var(--muted, #64748b)', margin: 0 }}>
@@ -1674,7 +1674,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                       backgroundColor: 'var(--accent, #3b82f6)',
                       color: '#ffffff',
                       border: 'none',
-                      fontWeight: 600,
+                      fontWeight: 400,
                       fontSize: 13,
                       cursor: 'pointer',
                       display: 'flex',
@@ -1741,7 +1741,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                           ))
                           .map((sub, idx) => (
                             <tr key={`sub-tab-${sub.id || idx}-${idx}`} style={{ borderBottom: '1px solid var(--card-border, #f1f5f9)' }}>
-                              <td style={{ padding: '12px 14px', fontWeight: 600, color: 'var(--foreground, #0f172a)' }}>
+                              <td style={{ padding: '12px 14px', fontWeight: 400, color: 'var(--foreground, #0f172a)' }}>
                                 {sub.email}
                               </td>
                               <td style={{ padding: '12px 14px', color: 'var(--muted, #64748b)' }}>
@@ -1755,7 +1755,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                                     borderRadius: 'var(--radius-sm, 0px)',
                                     backgroundColor: sub.status === 'Unsubscribed' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
                                     color: sub.status === 'Unsubscribed' ? '#dc2626' : '#059669',
-                                    fontWeight: 600,
+                                    fontWeight: 400,
                                   }}
                                 >
                                   {sub.status || 'Active'}
@@ -1776,7 +1776,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
             {/* SUB-VIEW 3: SENT HISTORY */}
             {audienceSubTab === 'history' && (
               <div>
-                <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 6px 0', color: 'var(--foreground, #0f172a)' }}>
+                <h3 style={{ fontSize: 18, fontWeight: 400, margin: '0 0 6px 0', color: 'var(--foreground, #0f172a)' }}>
                   📜 Sent Broadcasts History
                 </h3>
                 <p style={{ fontSize: 13, color: 'var(--muted, #64748b)', margin: '0 0 16px 0' }}>
@@ -1803,10 +1803,10 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                       {broadcasts.length > 0 ? (
                         broadcasts.map((bcast, idx) => (
                           <tr key={`bcast-${bcast.id || idx}-${idx}`} style={{ borderBottom: '1px solid var(--card-border, #f1f5f9)' }}>
-                            <td style={{ padding: '12px 14px', fontWeight: 600, color: 'var(--foreground, #0f172a)' }}>
+                            <td style={{ padding: '12px 14px', fontWeight: 400, color: 'var(--foreground, #0f172a)' }}>
                               {bcast.subject}
                             </td>
-                            <td style={{ padding: '12px 14px', color: '#10b981', fontWeight: 600 }}>
+                            <td style={{ padding: '12px 14px', color: '#10b981', fontWeight: 400 }}>
                               {bcast.recipientCount || 0} Recipients
                             </td>
                             <td style={{ padding: '12px 14px', color: 'var(--muted, #64748b)' }}>

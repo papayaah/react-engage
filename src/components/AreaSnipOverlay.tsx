@@ -217,7 +217,7 @@ export const AreaSnipOverlay: React.FC<AreaSnipOverlayProps> = ({ onCapture, onC
               backgroundColor: '#3b82f6',
               color: '#ffffff',
               fontSize: 11,
-              fontWeight: 600,
+              fontWeight: 400,
               padding: '2px 6px',
               borderRadius: 'var(--rfw-radius-sm, 0px)',
               whiteSpace: 'nowrap',

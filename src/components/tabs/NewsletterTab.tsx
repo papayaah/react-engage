@@ -154,7 +154,7 @@ export const NewsletterTab: React.FC<NewsletterTabProps> = ({
         <p style={{ margin: '0 0 6px 0', fontSize: 14, color: 'var(--rfw-muted)', lineHeight: 1.4 }}>
           {content.subscribedMessage}
         </p>
-        <div style={{ fontSize: 12, color: 'var(--rfw-accent)', fontWeight: 600, marginBottom: 16 }}>
+        <div style={{ fontSize: 12, color: 'var(--rfw-accent)', fontWeight: 400, marginBottom: 16 }}>
           {content.subscribedEmailLabel}: {email}
         </div>
         <button
@@ -275,7 +275,7 @@ export const NewsletterTab: React.FC<NewsletterTabProps> = ({
               borderRadius: 8,
               padding: '8px 12px',
               fontSize: 12,
-              fontWeight: 600,
+              fontWeight: 400,
               cursor: 'pointer',
             }}
           >
