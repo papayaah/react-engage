@@ -66,7 +66,7 @@ export const DEFAULT_ENGAGE_CONTENT: EngageWidgetContent = {
     emailLabels: { optional: 'Your Email (Optional)', required: 'Your Email *' },
     emailPlaceholder: 'name@example.com',
     attachmentsLabel: 'Attachments (Optional)',
-    attachmentAction: 'Attach screenshot or log',
+    attachmentAction: 'Attach screenshot or file',
     telemetryNotice: 'Auto-attaching URL ({path}), browser ({browser}), and OS ({os}).',
     submitButtons: {
       submitting: 'Submitting...',
