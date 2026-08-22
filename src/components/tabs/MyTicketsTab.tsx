@@ -68,7 +68,7 @@ export const MyTicketsTab: React.FC<MyTicketsTabProps> = ({
   return (
     <div className="rfw-tickets-panel">
       <div className="rfw-tickets-toolbar">
-        <div>
+        <div className="rfw-tickets-toolbar-info">
           <strong>{content.title}</strong>
           <span>{tickets.length} {tickets.length === 1 ? content.submissionSingular : content.submissionPlural}</span>
         </div>

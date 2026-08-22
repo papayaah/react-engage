@@ -19,6 +19,7 @@ export const FeedbackWidget: React.FC<FeedbackWidgetProps> = (props) => {
     offsetRight,
     mobileCollapse = true,
     iconOnly = false,
+    corners = 'inherit',
   } = props;
 
   const [isOpen, setIsOpen] = useState(false);
@@ -50,6 +51,7 @@ export const FeedbackWidget: React.FC<FeedbackWidgetProps> = (props) => {
       data-theme={resolvedTheme}
       data-mobile-collapse={mobileCollapse}
       data-icon-only={iconOnly}
+      data-corners={corners !== 'inherit' ? corners : undefined}
       style={customStyle}
     >
       {isOpen && <FeedbackDrawer {...props} resolvedContent={resolvedContent} themeMode={resolvedTheme} onClose={() => setIsOpen(false)} />}

@@ -48,6 +48,8 @@ export interface BugReportPayload {
   title: string;
   description: string;
   severity: BugSeverity;
+  email?: string;
+  name?: string;
   user?: WidgetUser;
   attachments?: Attachment[];
   environment: EnvironmentMeta;
@@ -58,7 +60,10 @@ export interface SuggestionPayload {
   title: string;
   category: SuggestionCategory;
   description: string;
+  email?: string;
+  name?: string;
   user?: WidgetUser;
+  attachments?: Attachment[];
   timestamp: string;
 }
 
@@ -67,7 +72,10 @@ export interface TicketPayload {
   subject: string;
   message: string;
   category?: string;
+  email?: string;
+  name?: string;
   user?: WidgetUser;
+  attachments?: Attachment[];
   timestamp: string;
 }
 
@@ -95,6 +103,7 @@ export interface EngageTicket {
   status: 'open' | 'in_progress' | 'resolved' | 'closed';
   subject?: string;
   message: string;
+  attachments?: Attachment[];
   upvotes?: number;
   createdAt: string;
 }
@@ -305,6 +314,8 @@ export interface FeedbackWidgetProps {
   mobileCollapse?: boolean;
   /** Force launcher to display as an icon-only button on all screen sizes */
   iconOnly?: boolean;
+  /** Corner radius style. Defaults to 'inherit' which respects host --radius or sharp 0px */
+  corners?: 'sharp' | 'rounded' | 'inherit';
 }
 
 export type EngageWidgetProps = FeedbackWidgetProps;
