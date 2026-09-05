@@ -11,6 +11,8 @@ export interface TicketItem {
   status: 'open' | 'in_progress' | 'resolved' | 'closed';
   subject?: string;
   message: string;
+  adminReply?: string;
+  repliedAt?: string;
   userEmail?: string;
   userName?: string;
   attachments?: Array<{
@@ -253,13 +255,15 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
         });
       }
 
-      setReplyStatus('Reply sent via email successfully!');
+      const nowIso = new Date().toISOString();
+      const sentReply = replyText;
+      setReplyStatus('Reply sent successfully!');
       setReplyText('');
       setTickets((prev) =>
-        prev.map((t) => (t.id === selectedTicket.id ? { ...t, status: 'resolved' } : t))
+        prev.map((t) => (t.id === selectedTicket.id ? { ...t, status: 'resolved', adminReply: sentReply, repliedAt: nowIso } : t))
       );
       if (selectedTicket) {
-        setSelectedTicket({ ...selectedTicket, status: 'resolved' });
+        setSelectedTicket({ ...selectedTicket, status: 'resolved', adminReply: sentReply, repliedAt: nowIso });
       }
     } catch (e) {
       setReplyStatus('Failed to send reply email.');
@@ -990,10 +994,35 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                     </div>
                   )}
 
+                  {/* Existing Admin Response (if already replied) */}
+                  {selectedTicket.adminReply && (
+                    <div
+                      style={{
+                        padding: 14,
+                        borderRadius: 'var(--radius, 0px)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                        border: '1px solid rgba(59, 130, 246, 0.25)',
+                        marginBottom: 16,
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                        <strong style={{ fontSize: 12, color: 'var(--accent, #3b82f6)' }}>Previous Response Sent</strong>
+                        {selectedTicket.repliedAt && (
+                          <span style={{ fontSize: 11, color: 'var(--muted, #64748b)' }}>
+                            {new Date(selectedTicket.repliedAt).toLocaleString()}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: 13, color: 'var(--foreground, #0f172a)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
+                        {selectedTicket.adminReply}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Reply Editor Form */}
                   <form onSubmit={handleSendReply} style={{ marginTop: 'auto' }}>
                     <div style={{ fontSize: 13, fontWeight: 400, marginBottom: 8, color: 'var(--foreground, #0f172a)' }}>
-                      Reply to User via Email ({selectedTicket.userEmail || 'No email specified'})
+                      Send Support Response ({selectedTicket.userEmail || 'No email specified'})
                     </div>
                     {replyStatus && (
                       <div

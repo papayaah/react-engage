@@ -42,6 +42,16 @@ export const DEFAULT_ENGAGE_CONTENT: EngageWidgetContent = {
       viewTicketsButton: 'View My Tickets',
       submitMoreButton: 'Submit More Feedback',
     },
+    summaryLabels: {
+      bug: 'Issue Summary (Optional)',
+      suggestion: 'Idea Summary (Optional)',
+      support: 'Subject (Optional)',
+    },
+    summaryPlaceholders: {
+      bug: 'e.g. Navigation menu failed to open',
+      suggestion: 'e.g. Add dark mode option or export support',
+      support: 'e.g. Question about my account',
+    },
     severityLabel: 'Severity (Optional)',
     severityOptions: {
       low: 'Low - Visual tweak or typo',

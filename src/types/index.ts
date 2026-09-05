@@ -103,6 +103,8 @@ export interface EngageTicket {
   status: 'open' | 'in_progress' | 'resolved' | 'closed';
   subject?: string;
   message: string;
+  adminReply?: string;
+  repliedAt?: string;
   attachments?: Attachment[];
   upvotes?: number;
   createdAt: string;
@@ -169,6 +171,8 @@ export interface EngageWidgetContent {
       viewTicketsButton: string;
       submitMoreButton: string;
     };
+    summaryLabels: Record<'bug' | 'suggestion' | 'support', string>;
+    summaryPlaceholders: Record<'bug' | 'suggestion' | 'support', string>;
     severityLabel: string;
     severityOptions: Record<BugSeverity, string>;
     suggestionTopicLabel: string;

@@ -8,6 +8,8 @@ export interface StoredTicket {
   status: 'open' | 'in_progress' | 'resolved' | 'closed';
   subject?: string;
   message: string;
+  adminReply?: string;
+  repliedAt?: string;
   userEmail?: string;
   userName?: string;
   attachments?: Array<{
@@ -321,13 +323,16 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
         const forbidden = await requireAdmin(req);
         if (forbidden) return forbidden;
         const { ticketId, userEmail, replyText } = body;
+        const repliedAt = new Date().toISOString();
         console.log(`[Engage API] Sending support reply to ${userEmail} for ticket ${ticketId}`);
 
-        // Update status in PostgreSQL if DB is connected
+        // Update status and reply in PostgreSQL if DB is connected
         if (db && tables?.tickets) {
           try {
             const { eq } = await import('drizzle-orm');
-            await db.update(tables.tickets).set({ status: 'resolved' }).where(eq(tables.tickets.id, ticketId));
+            await db.update(tables.tickets)
+              .set({ status: 'resolved', adminReply: replyText, repliedAt })
+              .where(eq(tables.tickets.id, ticketId));
           } catch (e) {
             console.error('[Engage API DB Update Error]:', e);
           }
@@ -337,6 +342,8 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
         const t = ticketStore.find((item) => item.id === ticketId);
         if (t) {
           t.status = 'resolved';
+          t.adminReply = replyText;
+          t.repliedAt = repliedAt;
         }
 
         if (apiKey && userEmail) {

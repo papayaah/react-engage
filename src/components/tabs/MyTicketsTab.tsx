@@ -119,6 +119,24 @@ export const MyTicketsTab: React.FC<MyTicketsTabProps> = ({
         <div className="rfw-ticket-list">
           {tickets.map((ticket) => {
             const isExpanded = expandedTicketId === ticket.id;
+            const genericTerms = new Set([
+              'bug',
+              'bug report',
+              'support',
+              'support request',
+              'ticket',
+              'support ticket',
+              'suggestion',
+              'feature suggestion',
+              'feature idea',
+              'idea',
+              'new feature',
+            ]);
+            const subject = ticket.subject?.trim();
+            const message = ticket.message?.trim();
+            const isCustomSubject = Boolean(subject && !genericTerms.has(subject.toLowerCase()));
+            const previewBlurb = isCustomSubject ? subject : message || subject || 'No description';
+
             return (
               <article className="rfw-ticket-card" key={ticket.id} data-expanded={isExpanded}>
                 <button
@@ -134,7 +152,7 @@ export const MyTicketsTab: React.FC<MyTicketsTabProps> = ({
                         {ticket.status.replace('_', ' ')}
                       </span>
                     </div>
-                    <strong>{ticket.subject || ticket.message.slice(0, 60)}</strong>
+                    <strong title={previewBlurb}>{previewBlurb}</strong>
                     <span className="rfw-ticket-date"><Clock3 size={12} />{formatDate(ticket.createdAt)}</span>
                   </div>
                   {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -143,10 +161,41 @@ export const MyTicketsTab: React.FC<MyTicketsTabProps> = ({
                 {isExpanded ? (
                   <div className="rfw-ticket-detail">
                     <div className="rfw-ticket-reference">{content.referenceLabel}: {ticket.id}</div>
-                    <p>{ticket.message}</p>
-                    <div className="rfw-ticket-reply-note">
-                      {interpolateContent(content.replyNote, { email: userEmail })}
-                    </div>
+                    {isCustomSubject && message && (
+                      <div style={{ fontWeight: 600, color: 'var(--rfw-fg)', marginBottom: 6 }}>
+                        {subject}
+                      </div>
+                    )}
+                    <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{ticket.message}</p>
+
+                    {ticket.adminReply ? (
+                      <div
+                        className="rfw-ticket-admin-reply"
+                        style={{
+                          marginTop: 12,
+                          padding: 12,
+                          borderRadius: 'var(--rfw-radius-sm, 0px)',
+                          backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                          border: '1px solid rgba(59, 130, 246, 0.2)',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                          <strong style={{ fontSize: 12, color: 'var(--rfw-accent)' }}>Response from Support Team</strong>
+                          {ticket.repliedAt && (
+                            <span style={{ fontSize: 10, color: 'var(--rfw-muted)' }}>{formatDate(ticket.repliedAt)}</span>
+                          )}
+                        </div>
+                        <p style={{ margin: 0, fontSize: 13, color: 'var(--rfw-fg)', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
+                          {ticket.adminReply}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="rfw-ticket-reply-note" style={{ marginTop: 10 }}>
+                        {userEmail
+                          ? interpolateContent(content.replyNote, { email: userEmail })
+                          : 'Our team will review your submission and update the status here.'}
+                      </div>
+                    )}
                   </div>
                 ) : null}
               </article>

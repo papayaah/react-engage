@@ -70,10 +70,52 @@ export const AreaSnipOverlay: React.FC<AreaSnipOverlayProps> = ({ onCapture, onC
         overlayRef.current.style.display = 'none';
       }
 
+      // Temporarily compensate for scrolled containers in the DOM so the SVG foreignObject
+      // renders them at their current visual scroll positions
+      const scrolledElements: {
+        children: { element: HTMLElement; originalTransform: string }[];
+      }[] = [];
+
+      const winScrollX = window.scrollX || document.documentElement.scrollLeft || document.body.scrollLeft || 0;
+      const winScrollY = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+
+      let originalBodyTransform = '';
+      if (document.body) {
+        originalBodyTransform = document.body.style.transform;
+        if (winScrollX > 0 || winScrollY > 0) {
+          const current = document.body.style.transform ? document.body.style.transform + ' ' : '';
+          document.body.style.transform = `${current}translate(${-winScrollX}px, ${-winScrollY}px)`;
+        }
+      }
+
+      const allElements = Array.from(document.querySelectorAll<HTMLElement>('*'));
+      for (const el of allElements) {
+        if (el === document.documentElement || el === document.body) continue;
+        if (el.scrollTop > 0 || el.scrollLeft > 0) {
+          const childEntries: { element: HTMLElement; originalTransform: string }[] = [];
+          const children = Array.from(el.children) as HTMLElement[];
+          for (const child of children) {
+            childEntries.push({
+              element: child,
+              originalTransform: child.style.transform,
+            });
+            const current = child.style.transform ? child.style.transform + ' ' : '';
+            child.style.transform = `${current}translate(${-el.scrollLeft}px, ${-el.scrollTop}px)`;
+          }
+          if (childEntries.length > 0) {
+            scrolledElements.push({ children: childEntries });
+          }
+        }
+      }
+
       try {
         const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
-        const fullCanvas = await toCanvas(document.body, {
+        const fullCanvas = await toCanvas(document.documentElement, {
           pixelRatio,
+          width: window.innerWidth,
+          height: window.innerHeight,
+          canvasWidth: window.innerWidth * pixelRatio,
+          canvasHeight: window.innerHeight * pixelRatio,
           filter: (node) => {
             if (node instanceof HTMLElement) {
               return (
@@ -85,16 +127,16 @@ export const AreaSnipOverlay: React.FC<AreaSnipOverlayProps> = ({ onCapture, onC
           },
         });
 
-        // Crop the full canvas to the user's selected area
+        // Crop the full canvas to the user's selected area (in viewport coordinates)
         const cropCanvas = document.createElement('canvas');
-        cropCanvas.width = selectionRect.width * pixelRatio;
-        cropCanvas.height = selectionRect.height * pixelRatio;
+        cropCanvas.width = Math.round(selectionRect.width * pixelRatio);
+        cropCanvas.height = Math.round(selectionRect.height * pixelRatio);
         const ctx = cropCanvas.getContext('2d');
         if (ctx) {
-          const sx = (selectionRect.x + window.scrollX) * pixelRatio;
-          const sy = (selectionRect.y + window.scrollY) * pixelRatio;
-          const sWidth = selectionRect.width * pixelRatio;
-          const sHeight = selectionRect.height * pixelRatio;
+          const sx = Math.round(selectionRect.x * pixelRatio);
+          const sy = Math.round(selectionRect.y * pixelRatio);
+          const sWidth = Math.round(selectionRect.width * pixelRatio);
+          const sHeight = Math.round(selectionRect.height * pixelRatio);
 
           ctx.drawImage(
             fullCanvas,
@@ -124,6 +166,15 @@ export const AreaSnipOverlay: React.FC<AreaSnipOverlayProps> = ({ onCapture, onC
       } catch (err) {
         console.error('[ReactEngage] Snip capture error:', err);
         onCancel();
+      } finally {
+        if (document.body) {
+          document.body.style.transform = originalBodyTransform;
+        }
+        for (const item of scrolledElements) {
+          for (const child of item.children) {
+            child.element.style.transform = child.originalTransform;
+          }
+        }
       }
     },
     [onCapture, onCancel]
