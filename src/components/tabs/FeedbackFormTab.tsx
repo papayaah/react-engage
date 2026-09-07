@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   BugReportPayload,
   SuggestionPayload,
@@ -65,6 +65,19 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [hasLocalTickets, setHasLocalTickets] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('engage_my_tickets');
+      const list = raw ? JSON.parse(raw) : [];
+      if (Array.isArray(list) && list.length > 0) {
+        setHasLocalTickets(true);
+      }
+    } catch {
+      // ignore
+    }
+  }, [isSubmitted]);
 
   const addFiles = (files: FileList | File[]) => {
     Array.from(files).forEach((file) => {
@@ -289,7 +302,7 @@ export const FeedbackFormTab: React.FC<FeedbackFormTabProps> = ({
           <span>{content.categories.support}</span>
         </button>
 
-        {onViewTickets ? (
+        {onViewTickets && (user?.email || hasLocalTickets) ? (
           <button
             type="button"
             className="rfw-mini-btn rfw-mini-btn-icon"

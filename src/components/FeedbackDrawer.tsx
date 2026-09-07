@@ -58,13 +58,28 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
   const [ticketRefreshKey, setTicketRefreshKey] = useState(0);
   const initialFeedbackCategory: FeedbackCategory = 'bug';
 
+  const saveLocalTicket = (ticketId?: string) => {
+    if (!ticketId || typeof window === 'undefined') return;
+    try {
+      const raw = localStorage.getItem('engage_my_tickets');
+      const list: string[] = raw ? JSON.parse(raw) : [];
+      if (!list.includes(ticketId)) {
+        list.unshift(ticketId);
+        localStorage.setItem('engage_my_tickets', JSON.stringify(list.slice(0, 50)));
+      }
+    } catch (e) {
+      console.warn('[Engage] Failed to save ticket to localStorage:', e);
+    }
+  };
+
   // Fallback submit handlers
   const handleBugSubmit = async (payload: BugReportPayload) => {
     if (onSubmitBug) {
       await onSubmitBug(payload);
     } else if (endpointUrl) {
       const { sendPayloadToEndpoint } = await import('../utils/adapters');
-      await sendPayloadToEndpoint(endpointUrl, 'bug', payload);
+      const res = await sendPayloadToEndpoint(endpointUrl, 'bug', payload);
+      if (res?.ticketId) saveLocalTicket(res.ticketId);
     } else {
       console.log('[Engage] Bug report payload:', payload);
     }
@@ -76,7 +91,8 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
       await onSubmitSuggestion(payload);
     } else if (endpointUrl) {
       const { sendPayloadToEndpoint } = await import('../utils/adapters');
-      await sendPayloadToEndpoint(endpointUrl, 'suggestion', payload);
+      const res = await sendPayloadToEndpoint(endpointUrl, 'suggestion', payload);
+      if (res?.ticketId) saveLocalTicket(res.ticketId);
     } else {
       console.log('[Engage] Suggestion payload:', payload);
     }
@@ -88,7 +104,8 @@ export const FeedbackDrawer: React.FC<FeedbackDrawerProps> = ({
       await onSubmitTicket(payload);
     } else if (endpointUrl) {
       const { sendPayloadToEndpoint } = await import('../utils/adapters');
-      await sendPayloadToEndpoint(endpointUrl, 'ticket', payload);
+      const res = await sendPayloadToEndpoint(endpointUrl, 'ticket', payload);
+      if (res?.ticketId) saveLocalTicket(res.ticketId);
     } else {
       console.log('[Engage] Ticket payload:', payload);
     }

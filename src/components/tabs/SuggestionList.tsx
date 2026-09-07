@@ -96,7 +96,7 @@ export const SuggestionList: React.FC<SuggestionListProps> = ({
       if (onVoteSuggestion) {
         await onVoteSuggestion(suggestion.id, nextAction);
       } else if (endpointUrl) {
-        await fetch(`${endpointUrl}?action=vote_suggestion`, {
+        const res = await fetch(`${endpointUrl}?action=vote_suggestion`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -105,6 +105,10 @@ export const SuggestionList: React.FC<SuggestionListProps> = ({
             voteAction: nextAction,
           }),
         });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || 'Failed to submit vote');
+        }
       }
     } catch (e) {
       console.error('[Engage] Failed to submit vote:', e);
@@ -184,14 +188,9 @@ export const SuggestionList: React.FC<SuggestionListProps> = ({
     <div className="rfw-suggestion-list-container">
       {/* Action Header */}
       <div className="rfw-sugg-header">
-        <div>
-          <div className="rfw-sugg-title-row">
-            <Lightbulb size={17} className="rfw-sugg-icon" />
-            <strong style={{ fontSize: 14 }}>{content.headerTitle}</strong>
-          </div>
-          <p className="rfw-sugg-subtitle">
-            {content.headerSubtitle}
-          </p>
+        <div className="rfw-sugg-title-row">
+          <Lightbulb size={17} className="rfw-sugg-icon" />
+          <strong style={{ fontSize: 14 }}>{content.headerTitle}</strong>
         </div>
 
         <button

@@ -94,6 +94,48 @@ const globalSuggestionVoteStore = new Set<string>(); // "suggestionId:userKey"
 // Memory store fallback for standalone app without DB
 const globalTicketStore: StoredTicket[] = [];
 
+function getClientIp(req: NextRequest): string {
+  const cf = req.headers.get('cf-connecting-ip');
+  if (cf) return cf.trim();
+  const real = req.headers.get('x-real-ip');
+  if (real) return real.trim();
+  const forwarded = req.headers.get('x-forwarded-for');
+  if (forwarded) return forwarded.split(',')[0].trim();
+  return '127.0.0.1';
+}
+
+// In-memory velocity rate limiter: max 5 votes per 60 seconds per IP
+const ipVoteHistory = new Map<string, number[]>();
+
+function checkVoteRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const windowMs = 60 * 1000;
+  const maxVotesPerWindow = 5;
+
+  const timestamps = ipVoteHistory.get(ip) || [];
+  const recent = timestamps.filter((t) => now - t < windowMs);
+
+  if (recent.length >= maxVotesPerWindow) {
+    return false;
+  }
+
+  recent.push(now);
+  ipVoteHistory.set(ip, recent);
+
+  if (ipVoteHistory.size > 2000) {
+    for (const [key, times] of ipVoteHistory.entries()) {
+      const validTimes = times.filter((t) => now - t < windowMs);
+      if (validTimes.length === 0) {
+        ipVoteHistory.delete(key);
+      } else {
+        ipVoteHistory.set(key, validTimes);
+      }
+    }
+  }
+
+  return true;
+}
+
 export function createEngageRouteHandler(config?: EngageServerConfig) {
   const db = config?.db;
   const tables = config?.tables;
@@ -135,6 +177,45 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
 
     if (action === 'list_user_tickets') {
       const requestUser = await resolveRequestUser(req);
+      const ticketIdsParam = searchParams.get('ticketIds');
+
+      if (!requestUser?.email && !ticketIdsParam) {
+        return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+      }
+
+      if (!requestUser?.email && ticketIdsParam) {
+        const allowedIds = ticketIdsParam
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+          .slice(0, 50);
+
+        if (allowedIds.length === 0) {
+          return NextResponse.json({ tickets: [] });
+        }
+
+        if (db && tables?.tickets) {
+          try {
+            const { inArray, desc } = await import('drizzle-orm');
+            const dbTickets = await db
+              .select()
+              .from(tables.tickets)
+              .where(inArray(tables.tickets.id, allowedIds))
+              .orderBy(desc(tables.tickets.createdAt));
+            return NextResponse.json({ tickets: dbTickets });
+          } catch (e) {
+            console.error('[Engage API Local Tickets Fetch Error]:', e);
+            return NextResponse.json({ error: 'Failed to load tickets' }, { status: 500 });
+          }
+        }
+
+        return NextResponse.json({
+          tickets: [...ticketStore]
+            .filter((t) => allowedIds.includes(t.id))
+            .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)),
+        });
+      }
+
       if (!requestUser?.email) {
         return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
       }
@@ -189,11 +270,16 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
     }
 
     if (action === 'list_suggestions') {
-      const userKey = searchParams.get('userKey') || (await resolveRequestUser(req))?.email || '';
+      const clientIp = getClientIp(req);
+      const requestUser = await resolveRequestUser(req);
+      const rawUserKey = searchParams.get('userKey');
+      const authEmail = requestUser?.email?.toLowerCase();
+      const ipKey = `ip_${clientIp}`;
+      const queryKeys = Array.from(new Set([authEmail, rawUserKey, ipKey].filter(Boolean))) as string[];
 
       if (db && tables?.tickets) {
         try {
-          const { desc, eq } = await import('drizzle-orm');
+          const { desc, eq, inArray } = await import('drizzle-orm');
           const suggestions = await db
             .select()
             .from(tables.tickets)
@@ -201,11 +287,11 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
             .orderBy(desc(tables.tickets.upvotes), desc(tables.tickets.createdAt));
 
           let votedIds = new Set<string>();
-          if (userKey && tables?.suggestionVotes) {
+          if (queryKeys.length > 0 && tables?.suggestionVotes) {
             const userVotes = await db
               .select({ suggestionId: tables.suggestionVotes.suggestionId })
               .from(tables.suggestionVotes)
-              .where(eq(tables.suggestionVotes.userKey, userKey));
+              .where(inArray(tables.suggestionVotes.userKey, queryKeys));
             votedIds = new Set(userVotes.map((v: any) => v.suggestionId));
           }
 
@@ -240,7 +326,7 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
           category: (s.category?.toLowerCase() as any) || 'new_feature',
           status: s.status || 'under_review',
           upvotes: Number((s as any).upvotes || 0),
-          hasVoted: userKey ? globalSuggestionVoteStore.has(`${s.id}:${userKey}`) : false,
+          hasVoted: queryKeys.some((k) => globalSuggestionVoteStore.has(`${s.id}:${k}`)),
           userEmail: s.userEmail,
           userName: s.userName,
           createdAt: s.createdAt,
@@ -379,9 +465,22 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
 
       // Community Suggestion Vote Action
       if (action === 'vote_suggestion') {
+        const clientIp = getClientIp(req);
+
+        // Velocity Rate Limiting: 5 votes / 60 seconds per IP
+        if (!checkVoteRateLimit(clientIp)) {
+          return NextResponse.json(
+            { error: 'Voting rate limit exceeded. Please wait a minute before voting again.' },
+            { status: 429 }
+          );
+        }
+
         const { suggestionId, userKey: rawUserKey, voteAction } = body;
         const requestUser = await resolveRequestUser(req);
-        const userKey = rawUserKey || requestUser?.email || requestUser?.id || 'anonymous';
+        const authEmail = requestUser?.email?.toLowerCase();
+        const ipKey = `ip_${clientIp}`;
+        // If authenticated, use email; if anonymous, use ipKey to prevent multi-identity spam
+        const userKey = authEmail || ipKey;
 
         if (!suggestionId) {
           return NextResponse.json({ error: 'Missing suggestionId' }, { status: 400 });
@@ -391,21 +490,41 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
 
         if (db && tables?.tickets) {
           try {
-            const { eq, and, sql } = await import('drizzle-orm');
+            const { eq, and, sql, or } = await import('drizzle-orm');
 
             if (tables?.suggestionVotes) {
+              const checkKeys = Array.from(new Set([userKey, rawUserKey].filter(Boolean))) as string[];
+
               if (isUpvote) {
+                const existingVote = await db
+                  .select()
+                  .from(tables.suggestionVotes)
+                  .where(
+                    and(
+                      eq(tables.suggestionVotes.suggestionId, suggestionId),
+                      or(...checkKeys.map((k) => eq(tables.suggestionVotes.userKey, k)))
+                    )
+                  )
+                  .limit(1);
+
+                if (existingVote.length > 0) {
+                  return NextResponse.json(
+                    { error: 'You have already voted for this suggestion.' },
+                    { status: 400 }
+                  );
+                }
+
                 await db.insert(tables.suggestionVotes).values({
                   id: `vote_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
                   suggestionId,
                   userKey,
                   createdAt: new Date().toISOString(),
-                }).onConflictDoNothing();
+                });
               } else {
                 await db.delete(tables.suggestionVotes).where(
                   and(
                     eq(tables.suggestionVotes.suggestionId, suggestionId),
-                    eq(tables.suggestionVotes.userKey, userKey)
+                    or(...checkKeys.map((k) => eq(tables.suggestionVotes.userKey, k)))
                   )
                 );
               }
@@ -443,6 +562,11 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
             if (!globalSuggestionVoteStore.has(voteKey)) {
               globalSuggestionVoteStore.add(voteKey);
               (ticket as any).upvotes += 1;
+            } else {
+              return NextResponse.json(
+                { error: 'You have already voted for this suggestion.' },
+                { status: 400 }
+              );
             }
           } else {
             if (globalSuggestionVoteStore.has(voteKey)) {

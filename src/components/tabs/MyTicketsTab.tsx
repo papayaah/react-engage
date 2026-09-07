@@ -33,13 +33,33 @@ export const MyTicketsTab: React.FC<MyTicketsTabProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const userEmail = user?.email;
 
+  const getLocalTicketIds = (): string[] => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const raw = localStorage.getItem('engage_my_tickets');
+      const list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list : [];
+    } catch {
+      return [];
+    }
+  };
+
   const loadTickets = useCallback(async (signal?: AbortSignal) => {
-    if (!endpointUrl || !userEmail) return;
+    if (!endpointUrl) return;
+    const localIds = getLocalTicketIds();
+    if (!userEmail && localIds.length === 0) {
+      setTickets([]);
+      return;
+    }
 
     setIsLoading(true);
     setErrorMessage(null);
     try {
-      const response = await fetch(`${endpointUrl}?action=list_user_tickets`, {
+      const url = userEmail
+        ? `${endpointUrl}?action=list_user_tickets`
+        : `${endpointUrl}?action=list_user_tickets&ticketIds=${encodeURIComponent(localIds.join(','))}`;
+
+      const response = await fetch(url, {
         credentials: 'same-origin',
         signal,
       });
@@ -84,7 +104,7 @@ export const MyTicketsTab: React.FC<MyTicketsTabProps> = ({
               <ArrowLeft size={14} />
             </button>
           ) : null}
-          {userEmail ? (
+          {userEmail || getLocalTicketIds().length > 0 ? (
             <button
               type="button"
               className="rfw-icon-btn"
@@ -101,19 +121,17 @@ export const MyTicketsTab: React.FC<MyTicketsTabProps> = ({
 
       {errorMessage ? <div className="rfw-inline-error">{errorMessage}</div> : null}
 
-      {!userEmail ? (
-        <div className="rfw-empty-state">
-          <Inbox size={30} />
-          <strong>{content.signedOutTitle}</strong>
-          <span>{content.signedOutMessage}</span>
-        </div>
-      ) : isLoading && tickets.length === 0 ? (
+      {isLoading && tickets.length === 0 ? (
         <div className="rfw-empty-state"><span>{content.loadingMessage}</span></div>
       ) : tickets.length === 0 ? (
         <div className="rfw-empty-state">
           <Inbox size={30} />
-          <strong>{content.emptyTitle}</strong>
-          <span>{content.emptyMessage}</span>
+          <strong>{userEmail ? content.emptyTitle : 'No tickets submitted yet'}</strong>
+          <span>
+            {userEmail
+              ? content.emptyMessage
+              : 'Tickets and bug reports submitted from this browser will appear here with their latest status.'}
+          </span>
         </div>
       ) : (
         <div className="rfw-ticket-list">
