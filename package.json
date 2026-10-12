@@ -46,26 +46,37 @@
       "import": "./src/server/index.ts",
       "require": "./src/server/index.ts"
     },
+    "./email-server": {
+      "types": "./src/server/email/index.ts",
+      "import": "./src/server/email/index.ts",
+      "require": "./src/server/email/index.ts"
+    },
     "./styles.css": "./src/styles.css"
   },
   "files": [
-    "src"
+    "src",
+    "!src/**/*.test.ts"
   ],
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "test": "vitest run"
   },
   "peerDependencies": {
     "lucide-react": ">=0.300.0",
     "react": "^18.0.0 || ^19.0.0",
-    "react-dom": "^18.0.0 || ^19.0.0"
+    "react-dom": "^18.0.0 || ^19.0.0",
+    "next": ">=14"
   },
+  "peerDependenciesMeta": { "next": { "optional": true } },
   "devDependencies": {
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "lucide-react": "^0.563.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "next": "16.1.6",
+    "vitest": "^4.1.10"
   },
   "dependencies": {
     "html-to-image": "^1.11.13"

@@ -1,0 +1,18 @@
+name = "engage-inbound-email"
+main = "worker.js"
+compatibility_date = "2026-10-12"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+# Set these for the host application. The bearer secret is configured with wrangler secret put.
+ENGAGE_ENDPOINT = "https://your-app.example/api/engage"
+MAILBOX_ADDRESS = "hello@your-domain.example"
+FORWARD_TO = ""
+
+[[kv_namespaces]]
+binding = "INBOUND_RETRY"
+# Create a KV namespace and replace this ID before deployment.
+id = "00000000000000000000000000000000"
+
+[triggers]
+crons = ["*/5 * * * *"]

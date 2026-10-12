@@ -154,3 +154,102 @@ To clear host mobile navigation bars or customize placement:
   mobileCollapse={true}   // Automatically collapses to circular icon on screens <= 640px
 />
 ```
+
+## Email helpdesk
+
+The optional email workspace lives in the existing ticket system. It includes
+an inbox, conversation replies, a plain-text composer, and sent/outbox history.
+Email conversations are support tickets: incoming replies reopen the ticket,
+and replies from the support panel share the same email history.
+
+```tsx
+import { EngageAdminPanel, EmailDesk } from '@reactkits.dev/react-engage/admin';
+import '@reactkits.dev/react-engage/styles.css';
+
+// Inside the full helpdesk:
+<EngageAdminPanel apiEndpoint="/api/engage" mailbox defaultTab="email" theme="inherit" />
+
+// Or mount only email in any React 18/19 app:
+<EmailDesk apiEndpoint="/your/helpdesk-api" theme="system" />
+```
+
+`EmailDesk` accepts a typed `client: EmailClient` for custom HTTP, GraphQL, or
+other backends. `EmailComposer` is also exported and accepts `sender` and an
+`onSend(draft)` callback. Neither React component imports Next.js or contains
+application identities, API keys, or mailbox passwords.
+
+### Backend and persistence
+
+For Next.js, configure the existing route handler:
+
+```ts
+import { createEngageRouteHandler } from '@reactkits.dev/react-engage/server';
+
+export const { GET, POST } = createEngageRouteHandler({
+  senderEmail: 'hello@your-domain.example',
+  senderName: 'Your support team',
+  apiKey: process.env.BREVO_API_KEY,
+  resolveRequestUser: async request => {
+    const user = await resolveYourSession(request);
+    return user ? { email: user.email, isAdmin: user.isAdmin } : null;
+  },
+  mailbox: {
+    store: yourDatabaseEmailStore,
+    inboundSecret: process.env.ENGAGE_INBOUND_SECRET,
+  },
+});
+```
+
+For another Node backend, `@reactkits.dev/react-engage/email-server` exports
+`createEngageEmailHandler`, which uses standard `Request` and `Response` and
+has no Next.js dependency. Supply `sender`, `getApiKey`, `authorize`, and the
+same mailbox options, then call `handler.handle(request, action)`.
+
+Hosts implement the exported `EmailStore` contract with their database:
+`listThreads`, `getConversation`, `findMessage`, `findByProviderId`,
+`reserveMessage`, `updateDelivery`, and `markRead`. Reserve messages atomically
+with their support ticket before contacting the provider; deduplicate message
+IDs and provider IDs. `createMemoryEmailStore` is isolated demo/test storage,
+not durable production storage. Keep each application/tenant's store scoped to
+its own mailbox. The optional `transport: EmailTransport` replaces Brevo while
+preserving the same workflow.
+
+The default transport reads `apiKey`, `ENGAGE_API_KEY`, or `BREVO_API_KEY` on the
+server. Both From and Reply-to use the configured server sender; client input
+cannot override them. Every outgoing attempt has a client-generated request
+ID. Accepted attempts are replay-safe; failed, pending, and unconfirmed attempts
+stay visible in the outbox. Network uncertainty never causes automatic resend.
+“Accepted for delivery” means provider acceptance, not confirmed inbox delivery.
+
+### Incoming email
+
+Connect an email provider/Worker to `POST ?action=receive_email`, authenticated
+with `Authorization: Bearer <ENGAGE_INBOUND_SECRET>` (32+ random characters).
+The normalized JSON contract is:
+
+```json
+{
+  "messageId": "<unique-message-id@example.com>",
+  "from": "customer@example.com",
+  "fromName": "Customer",
+  "to": "hello@your-domain.example",
+  "subject": "Question",
+  "text": "Plain-text message",
+  "inReplyTo": "<previous-provider-message-id@example.com>",
+  "references": ["<previous-provider-message-id@example.com>"],
+  "attachments": [{ "name": "report.pdf", "contentType": "application/pdf", "size": 1234 }]
+}
+```
+
+Message-ID retries are deduplicated. Referenced replies join an existing ticket
+only when the sender matches that ticket's contact; unrelated senders create a
+new ticket. Bodies render as plain text, never executable email HTML. This
+initial version lists attachment metadata; the forwarded mailbox copy retains
+attachment files. It does not synchronize Gmail read states, ingest historic
+Gmail mail, or provide delivery/bounce webhooks.
+
+A deployable [Cloudflare Email Worker example](examples/cloudflare-email-worker/README.md)
+parses MIME, converts HTML-only emails to text, optionally forwards a complete
+copy to your existing mailbox, and stores failed ingestion in KV for scheduled
+retry. Configure and deploy that adapter separately; enabling the React UI does
+not change domain routing.

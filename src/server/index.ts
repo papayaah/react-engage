@@ -1,4 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createEngageEmailHandler, EMAIL_ACTIONS } from './email/handler';
+import type { EmailMailboxConfig } from '../email/types';
+export { createEngageEmailHandler } from './email/handler';
+export { createMemoryEmailStore } from './email/memory-store';
+export { createBrevoEmailTransport, EmailDeliveryError } from './email/transport';
+export type * from '../email/types';
 
 export interface StoredTicket {
   id: string;
@@ -68,6 +74,8 @@ export interface EngageEmailContent {
 }
 
 export interface EngageServerConfig {
+  /** Enable the shared email helpdesk with host-owned durable storage. */
+  mailbox?: EmailMailboxConfig;
   apiKey?: string;
   adminEmail?: string;
   senderEmail?: string;
@@ -170,10 +178,20 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
     const requestUser = await resolveRequestUser(req);
     return requestUser?.isAdmin ? null : NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   };
+  const mailbox = config?.mailbox ? createEngageEmailHandler({
+    ...config.mailbox,
+    sender: { email: getSenderEmail(), name: getSenderName() },
+    getApiKey,
+    authorize: async request => Boolean((await resolveRequestUser(request as NextRequest))?.isAdmin),
+  }) : null;
 
   async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const action = searchParams.get('action');
+
+    if (action && EMAIL_ACTIONS.has(action)) {
+      return mailbox ? mailbox.handle(req, action) : NextResponse.json({ error: 'The email mailbox is not configured.' }, { status: 503 });
+    }
 
     if (action === 'list_user_tickets') {
       const requestUser = await resolveRequestUser(req);
@@ -397,6 +415,9 @@ export function createEngageRouteHandler(config?: EngageServerConfig) {
     try {
       const { searchParams } = new URL(req.url);
       const action = searchParams.get('action');
+      if (action && (EMAIL_ACTIONS.has(action) || (action === 'send_reply' && mailbox))) {
+        return mailbox ? mailbox.handle(req, action) : NextResponse.json({ error: 'The email mailbox is not configured.' }, { status: 503 });
+      }
       const body = await req.json();
 
       const apiKey = getApiKey();

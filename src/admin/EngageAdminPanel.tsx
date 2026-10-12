@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { EmailDesk, type EmailDeskProps } from './email/EmailDesk';
 import { Inbox, Mail, FileText, Send, User, RefreshCw, Filter, Eye, Users, Download, Search, X, Paperclip, Lightbulb } from 'lucide-react';
 
 export interface TicketItem {
@@ -44,7 +45,9 @@ export interface EngageAdminPanelProps {
   /** Theme mode for the panel */
   theme?: 'inherit' | 'light' | 'dark';
   /** Initial active admin tab */
-  defaultTab?: 'inbox' | 'templates' | 'newsletter';
+  defaultTab?: 'inbox' | 'templates' | 'newsletter' | 'email';
+  /** Mount the shared email inbox/composer/outbox inside the helpdesk. */
+  mailbox?: boolean | Omit<EmailDeskProps, 'apiEndpoint' | 'onOpenTicket' | 'onChanged'>;
   /** Custom handler when admin sends a reply email */
   onSendReply?: (ticketId: string, recipientEmail: string, replyText: string) => Promise<void>;
   /** Custom handler when admin saves an email template */
@@ -110,8 +113,13 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
   onSendBroadcast,
   initialTemplates = DEFAULT_TEMPLATES,
   initialBroadcastSubject = 'New Product Updates',
+  mailbox,
+  theme = 'inherit',
 }) => {
-  const [activeTab, setActiveTab] = useState<'inbox' | 'suggestions' | 'newsletter' | 'templates'>(defaultTab as any);
+  const [activeTab, setActiveTab] = useState<'inbox' | 'suggestions' | 'newsletter' | 'templates' | 'email'>(defaultTab === 'email' && !mailbox ? 'inbox' : defaultTab);
+  const [emailOpened, setEmailOpened] = useState(defaultTab === 'email' && Boolean(mailbox));
+  const [emailTicketId, setEmailTicketId] = useState<string | undefined>();
+  const supportSendAttempt = useRef<{ ticketId: string; text: string; id: string } | null>(null);
   const [audienceSubTab, setAudienceSubTab] = useState<'broadcast' | 'subscribers' | 'history'>('broadcast');
   const [subscriberSearch, setSubscriberSearch] = useState('');
   const [suggestionSearch, setSuggestionSearch] = useState('');
@@ -193,7 +201,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
   };
 
   useEffect(() => {
-    fetchTickets();
+    if (activeTab !== 'email') fetchTickets();
   }, [apiEndpoint, activeTab, audienceSubTab]);
 
   const handleTemplateChange = (id: 'welcome' | 'ticket_reply' | 'newsletter') => {
@@ -244,20 +252,30 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
       if (onSendReply) {
         await onSendReply(selectedTicket.id, selectedTicket.userEmail || '', replyText);
       } else {
-        await fetch(`${apiEndpoint}?action=send_reply`, {
+        if (supportSendAttempt.current?.ticketId !== selectedTicket.id || supportSendAttempt.current?.text !== replyText) {
+          supportSendAttempt.current = { ticketId: selectedTicket.id, text: replyText, id: crypto.randomUUID() };
+        }
+        const response = await fetch(`${apiEndpoint}?action=send_reply`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ticketId: selectedTicket.id,
             userEmail: selectedTicket.userEmail,
             replyText,
+            requestId: supportSendAttempt.current.id,
           }),
         });
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+          if (result.outcome === 'failed') supportSendAttempt.current = null;
+          throw new Error(result.error || 'Sending could not be confirmed. Check Sent & outbox.');
+        }
       }
 
       const nowIso = new Date().toISOString();
       const sentReply = replyText;
-      setReplyStatus('Reply sent successfully!');
+      supportSendAttempt.current = null;
+      setReplyStatus('Reply accepted for delivery.');
       setReplyText('');
       setTickets((prev) =>
         prev.map((t) => (t.id === selectedTicket.id ? { ...t, status: 'resolved', adminReply: sentReply, repliedAt: nowIso } : t))
@@ -266,7 +284,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
         setSelectedTicket({ ...selectedTicket, status: 'resolved', adminReply: sentReply, repliedAt: nowIso });
       }
     } catch (e) {
-      setReplyStatus('Failed to send reply email.');
+      setReplyStatus(e instanceof Error ? e.message : 'Sending could not be confirmed. Check Sent & outbox.');
     } finally {
       setIsSendingReply(false);
     }
@@ -321,7 +339,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
   // Universal client-side search across every loaded record (tickets, suggestions,
   // subscribers). When active, the content area shows grouped results instead of tabs.
   const globalQuery = globalSearch.trim().toLowerCase();
-  const isSearching = globalQuery.length > 0;
+  const isSearching = activeTab !== 'email' && globalQuery.length > 0;
   const matchesQuery = (...values: Array<string | null | undefined>) =>
     values.some((v) => typeof v === 'string' && v.toLowerCase().includes(globalQuery));
   const searchTickets = isSearching
@@ -355,8 +373,14 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
 
   return (
     <div
-      className="rfw-admin-panel"
+      className="rfw-root rfw-admin-panel"
+      data-theme={theme}
       style={{
+        ...(theme === 'inherit' ? {} : {
+          '--background': 'var(--rfw-bg)', '--foreground': 'var(--rfw-fg)', '--muted': 'var(--rfw-muted)',
+          '--muted-bg': 'var(--rfw-card-bg)', '--card-bg': 'var(--rfw-card-bg)',
+          '--card-border': 'var(--rfw-card-border)', '--accent': 'var(--rfw-accent)',
+        }),
         display: 'flex',
         flexDirection: 'column',
         minHeight: '750px',
@@ -401,6 +425,10 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
 
         {/* Navigation Tabs */}
         <div className="rfw-admin-tabs" style={{ display: 'flex', gap: 6, background: 'var(--muted-bg, #e2e8f0)', padding: 4, borderRadius: 'var(--radius, 0px)', flexWrap: 'wrap' }}>
+          {mailbox && <button type="button" onClick={() => { setEmailOpened(true); setActiveTab('email'); }}
+            className="rfw-root rfw-email-button" data-theme={theme} aria-pressed={activeTab === 'email'}>
+            <Mail size={14} /><span>Email</span>
+          </button>}
           <button
             onClick={() => setActiveTab('inbox')}
             style={{
@@ -494,7 +522,7 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
       </div>
 
       {/* Universal Search Bar */}
-      <div style={{ padding: '10px 20px', borderBottom: '1px solid var(--card-border, #e2e8f0)', backgroundColor: 'var(--background, #ffffff)' }}>
+      <div hidden={activeTab === 'email'} style={{ padding: '10px 20px', borderBottom: '1px solid var(--card-border, #e2e8f0)', backgroundColor: 'var(--background, #ffffff)' }}>
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
           <Search size={15} style={{ position: 'absolute', left: 10, color: 'var(--muted, #64748b)', pointerEvents: 'none' }} />
           <input
@@ -535,6 +563,11 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
 
       {/* Main Content Area */}
       <div className="rfw-admin-content" style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+        {mailbox && emailOpened && <div hidden={activeTab !== 'email'} style={{ width: '100%', minWidth: 0 }}>
+          <EmailDesk apiEndpoint={apiEndpoint} theme={theme} {...(typeof mailbox === 'object' ? mailbox : {})}
+            initialTicketId={emailTicketId} onChanged={() => { void fetchTickets(); }}
+            onOpenTicket={ticket => openTicket(tickets.find(item => item.id === ticket.id) || { ...ticket, type: 'ticket' })} />
+        </div>}
         {/* GLOBAL SEARCH RESULTS (replaces tab content while searching) */}
         {isSearching && (
           <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
@@ -995,6 +1028,10 @@ export const EngageAdminPanel: React.FC<EngageAdminPanelProps> = ({
                   )}
 
                   {/* Existing Admin Response (if already replied) */}
+                  {mailbox && selectedTicket.userEmail && <button type="button" className="rfw-root rfw-email-button" data-theme={theme}
+                    onClick={() => { setEmailTicketId(selectedTicket.id); setEmailOpened(true); setActiveTab('email'); }}>
+                    <Mail size={14} />Open email conversation
+                  </button>}
                   {selectedTicket.adminReply && (
                     <div
                       style={{
